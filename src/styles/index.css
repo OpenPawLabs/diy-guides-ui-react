@@ -1,0 +1,11 @@
+/* Tailwind CSS v4 — must be first */
+@import "tailwindcss";
+
+/* HeroUI v3 styles — must be after Tailwind */
+@import "@heroui/styles";
+
+/* Library design tokens and base styles */
+@theme {
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
+}

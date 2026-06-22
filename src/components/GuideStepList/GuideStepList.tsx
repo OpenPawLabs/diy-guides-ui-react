@@ -9,7 +9,7 @@ import {
   type ReactElement,
   type ReactNode,
 } from "react";
-import { Card, ProgressBar, cn } from "@heroui/react";
+import { Card, ProgressBar, Separator, cn } from "@heroui/react";
 import type { GuideStepProps } from "../GuideStep";
 
 export interface GuideProgress {
@@ -88,7 +88,7 @@ export function GuideStepList({
         </div>
       )}
 
-      <ol className="flex flex-col gap-8">
+      <ol className="flex flex-col">
         {steps.map((step, index) => {
           const number = step.props.number ?? index + 1;
           return (
@@ -101,6 +101,7 @@ export function GuideStepList({
                   step.props.onCompletedChange?.(value);
                 },
               })}
+              {index < steps.length - 1 && <Separator className="my-8" />}
             </li>
           );
         })}

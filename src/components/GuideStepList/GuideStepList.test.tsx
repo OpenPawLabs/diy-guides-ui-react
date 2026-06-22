@@ -34,6 +34,17 @@ describe("GuideStepList", () => {
     expect(screen.getByText("3")).toBeInTheDocument();
   });
 
+  it("renders a separator between steps", () => {
+    render(
+      <GuideStepList showProgress={false}>
+        <Step title="First" />
+        <Step title="Second" />
+        <Step title="Third" />
+      </GuideStepList>,
+    );
+    expect(screen.getAllByRole("separator")).toHaveLength(2);
+  });
+
   it("seeds progress from defaultCompleted steps", () => {
     render(
       <GuideStepList>

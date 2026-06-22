@@ -2,15 +2,32 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { GuideStepList } from "./GuideStepList";
-import { GuideStep } from "../GuideStep";
+import { GuideStep, type GuideStepProps } from "../GuideStep";
+import { MediaFigure } from "../MediaFigure";
+
+function Step({ title, ...props }: GuideStepProps) {
+  return (
+    <GuideStep title={title} {...props}>
+      <GuideStep.Media>
+        <MediaFigure
+          src="https://placehold.co/800x600/png?text=Step"
+          alt={`${title} photo`}
+        />
+      </GuideStep.Media>
+      <GuideStep.Bullets>
+        <GuideStep.Bullet>Instruction for {title}.</GuideStep.Bullet>
+      </GuideStep.Bullets>
+    </GuideStep>
+  );
+}
 
 describe("GuideStepList", () => {
   it("auto-numbers steps in order", () => {
     render(
       <GuideStepList showProgress={false}>
-        <GuideStep title="First" />
-        <GuideStep title="Second" />
-        <GuideStep title="Third" />
+        <Step title="First" />
+        <Step title="Second" />
+        <Step title="Third" />
       </GuideStepList>,
     );
     expect(screen.getByText("1")).toBeInTheDocument();
@@ -21,8 +38,8 @@ describe("GuideStepList", () => {
   it("seeds progress from defaultCompleted steps", () => {
     render(
       <GuideStepList>
-        <GuideStep title="Done" defaultCompleted />
-        <GuideStep title="Todo" />
+        <Step title="Done" defaultCompleted />
+        <Step title="Todo" />
       </GuideStepList>,
     );
     expect(screen.getByText("1 / 2 steps")).toBeInTheDocument();
@@ -33,8 +50,8 @@ describe("GuideStepList", () => {
     const onProgressChange = vi.fn();
     render(
       <GuideStepList onProgressChange={onProgressChange}>
-        <GuideStep title="First" />
-        <GuideStep title="Second" />
+        <Step title="First" />
+        <Step title="Second" />
       </GuideStepList>,
     );
     expect(screen.getByText("0 / 2 steps")).toBeInTheDocument();

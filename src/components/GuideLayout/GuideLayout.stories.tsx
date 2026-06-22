@@ -96,6 +96,12 @@ export const FullGuide: Story = {
               </GuideStep>
 
               <GuideStep title="Install the new battery and reassemble">
+                <GuideStep.Media>
+                  <MediaFigure
+                    src="https://placehold.co/800x600/dbeafe/1e40af/png?text=Reassemble"
+                    alt="Reassembling the device"
+                  />
+                </GuideStep.Media>
                 <GuideStep.Bullets>
                   <GuideStep.Bullet>
                     Seat the new battery and reconnect the connector.

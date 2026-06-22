@@ -38,8 +38,14 @@ export const Default: Story = {
           <GuideStep.Bullet>
             Insert a pry tool and run it along the seam to release the clips.
           </GuideStep.Bullet>
-          <GuideStep.Bullet severity="danger">
+          <GuideStep.Bullet variant="caution">
             Do not pry near the battery — it can puncture and ignite.
+          </GuideStep.Bullet>
+          <GuideStep.Bullet variant="reminder">
+            Keep track of screw lengths — they are not interchangeable.
+          </GuideStep.Bullet>
+          <GuideStep.Bullet variant="note">
+            Replacement adhesive loses tack after the first removal.
           </GuideStep.Bullet>
         </GuideStep.Bullets>
       </GuideStep>
@@ -90,6 +96,12 @@ export const Completed: Story = {
   render: (args) => (
     <div className="max-w-4xl">
       <GuideStep {...args}>
+        <GuideStep.Media>
+          <MediaFigure
+            src="https://placehold.co/800x600/e2e8f0/1e293b/png?text=Done"
+            alt="Completed step"
+          />
+        </GuideStep.Media>
         <GuideStep.Bullets>
           <GuideStep.Bullet>This step is already marked complete.</GuideStep.Bullet>
         </GuideStep.Bullets>
@@ -103,6 +115,12 @@ export const WithoutCompletion: Story = {
   render: (args) => (
     <div className="max-w-4xl">
       <GuideStep {...args}>
+        <GuideStep.Media>
+          <MediaFigure
+            src="https://placehold.co/800x600/e2e8f0/1e293b/png?text=Reassemble"
+            alt="Reassembling the device"
+          />
+        </GuideStep.Media>
         <GuideStep.Bullets>
           <GuideStep.Bullet severity="tip">
             To reassemble, follow these steps in reverse order.

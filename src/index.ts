@@ -33,6 +33,7 @@ export { GuideStep } from "./components/GuideStep";
 export type {
   GuideStepProps,
   GuideStepBulletProps,
+  GuideStepBulletVariant,
 } from "./components/GuideStep";
 
 export { GuideStepList } from "./components/GuideStepList";

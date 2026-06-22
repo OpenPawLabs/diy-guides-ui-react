@@ -11,7 +11,11 @@ import {
 } from "react";
 import { Checkbox, cn } from "@heroui/react";
 import { useControlledState } from "../../hooks/useControlledState";
-import { type GuideSeverity, severityDotClass } from "../../types/severity";
+import {
+  type GuideSeverity,
+  severityDotClass,
+  severityLabel,
+} from "../../types/severity";
 import { MediaFigure, type MediaFigureProps } from "../MediaFigure";
 
 const MAX_STEP_IMAGES = 3;
@@ -29,22 +33,108 @@ export interface GuideStepProps {
   onCompletedChange?: (completed: boolean) => void;
   /** Render the "mark complete" checkbox. @default true */
   completable?: boolean;
-  /** Step body — compose with `GuideStep.Media` and `GuideStep.Bullets`. */
+  /** Step body — requires `GuideStep.Media` (≥1 image) and `GuideStep.Bullets` (≥1 bullet). */
   children?: ReactNode;
   className?: string;
 }
 
+/** Bullet presentation — `color` uses a severity dot; others use semantic icons and labels. */
+export type GuideStepBulletVariant = "color" | "caution" | "reminder" | "note";
+
 export interface GuideStepBulletProps {
-  /** Marker tone — match a related `MediaFigure` annotation to link them. @default "note" */
+  /**
+   * Bullet style. `color` renders a severity-colored dot (link to `MediaFigure`
+   * annotations); `caution`, `reminder`, and `note` render iFixit-style semantic bullets.
+   * @default "color"
+   */
+  variant?: GuideStepBulletVariant;
+  /** Marker tone for `color` bullets — match a related `MediaFigure` annotation. @default "note" */
   severity?: GuideSeverity;
+  /** Override the auto-generated label for semantic bullet types. */
+  label?: ReactNode;
+  /** Hide the auto-generated label for `caution`, `reminder`, and `note` bullets. */
+  hideLabel?: boolean;
   children: ReactNode;
   className?: string;
+}
+
+const bulletVariantLabel: Record<
+  Exclude<GuideStepBulletVariant, "color">,
+  string
+> = {
+  caution: severityLabel.caution,
+  reminder: "Reminder",
+  note: severityLabel.note,
+};
+
+function CautionIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="size-5 shrink-0 text-danger"
+    >
+      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0ZM12 9v4M12 17h.01" />
+    </svg>
+  );
+}
+
+function NoteIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="size-5 shrink-0 text-default-500"
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 16v-4M12 8h.01" />
+    </svg>
+  );
+}
+
+function ReminderIcon() {
+  return (
+    <span
+      aria-hidden="true"
+      className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded bg-default-100"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        className="size-3.5 text-default-500"
+      >
+        <path d="M16 12V4h1V3H7v1h1v8l-2 2v1h5.2c-.2.6-.3 1.2-.3 1.8 0 2.2 1.8 4 4 4s4-1.8 4-4c0-.6-.1-1.2-.3-1.8H18v-1l-2-2z" />
+      </svg>
+    </span>
+  );
 }
 
 function isMediaFigure(
   node: ReactNode,
 ): node is ReactElement<MediaFigureProps> {
   return isValidElement(node) && node.type === MediaFigure;
+}
+
+function isGuideStepBullet(
+  node: ReactNode,
+): node is ReactElement<GuideStepBulletProps> {
+  return isValidElement(node) && node.type === GuideStepBullet;
+}
+
+function countBullets(bulletsNode: ReactNode): number {
+  if (!isValidElement<{ children?: ReactNode }>(bulletsNode)) return 0;
+  return Children.toArray(bulletsNode.props.children).filter(isGuideStepBullet)
+    .length;
 }
 
 function extractStepParts(children: ReactNode) {
@@ -62,11 +152,24 @@ function extractStepParts(children: ReactNode) {
   }
 
   const figures = Children.toArray(mediaChildren).filter(isMediaFigure);
+  const bulletCount = countBullets(bullets);
 
-  if (import.meta.env.DEV && figures.length > MAX_STEP_IMAGES) {
-    console.warn(
-      `GuideStep.Media supports at most ${MAX_STEP_IMAGES} images; ${figures.length} provided.`,
-    );
+  if (import.meta.env.DEV) {
+    if (figures.length === 0) {
+      console.warn(
+        "GuideStep requires at least one MediaFigure inside GuideStep.Media.",
+      );
+    }
+    if (bulletCount === 0) {
+      console.warn(
+        "GuideStep requires at least one GuideStep.Bullet inside GuideStep.Bullets.",
+      );
+    }
+    if (figures.length > MAX_STEP_IMAGES) {
+      console.warn(
+        `GuideStep.Media supports at most ${MAX_STEP_IMAGES} images; ${figures.length} provided.`,
+      );
+    }
   }
 
   return {
@@ -76,7 +179,7 @@ function extractStepParts(children: ReactNode) {
 }
 
 /** Slot for up to three `MediaFigure`s — parent renders main image + hover thumbnails. */
-function GuideStepMedia() {
+function GuideStepMedia({ children: _children }: { children?: ReactNode }) {
   return null;
 }
 
@@ -93,22 +196,57 @@ function GuideStepBullets({
   );
 }
 
-/** A single instruction line with a severity-colored marker dot. */
+/** A single instruction line — color dots or semantic caution / reminder / note bullets. */
 function GuideStepBullet({
+  variant = "color",
   severity = "note",
+  label,
+  hideLabel = false,
   children,
   className,
 }: GuideStepBulletProps) {
+  if (variant === "color") {
+    return (
+      <li className={cn("flex gap-2.5", className)}>
+        <span
+          aria-hidden="true"
+          className={cn(
+            "mt-1.5 size-2 shrink-0 rounded-full",
+            severityDotClass[severity],
+          )}
+        />
+        <span className="flex-1">{children}</span>
+      </li>
+    );
+  }
+
+  const resolvedLabel = label ?? bulletVariantLabel[variant];
+  const icon =
+    variant === "caution" ? (
+      <CautionIcon />
+    ) : variant === "reminder" ? (
+      <ReminderIcon />
+    ) : (
+      <NoteIcon />
+    );
+
   return (
-    <li className={cn("flex gap-2.5", className)}>
-      <span
-        aria-hidden="true"
-        className={cn(
-          "mt-1.5 size-2 shrink-0 rounded-full",
-          severityDotClass[severity],
+    <li
+      className={cn(
+        "flex gap-2.5",
+        variant === "caution" && "text-danger",
+        className,
+      )}
+    >
+      {icon}
+      <span className="flex-1">
+        {!hideLabel && (
+          <>
+            <span className="font-semibold">{resolvedLabel}:</span>{" "}
+          </>
         )}
-      />
-      <span className="flex-1">{children}</span>
+        {children}
+      </span>
     </li>
   );
 }
@@ -138,25 +276,7 @@ function GuideStepBody({
   bullets: ReactNode;
 }) {
   const [activeIndex, setActiveIndex] = useState(0);
-  const hasMedia = figures.length > 0;
-  const hasBullets = bullets != null;
   const active = figures[activeIndex] ?? figures[0];
-
-  if (!hasMedia && !hasBullets) return null;
-
-  if (!hasMedia) {
-    return <div className="min-w-0">{bullets}</div>;
-  }
-
-  if (!hasBullets) {
-    return (
-      <div className="min-w-0">
-        {cloneElement(figures[0], {
-          className: cn("w-full", figures[0].props.className),
-        })}
-      </div>
-    );
-  }
 
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -273,7 +393,8 @@ function GuideStepRoot({
 /**
  * A single numbered guide step: header with number badge and optional completion
  * checkbox, plus a two-column body (main image left, thumbnails + bullets right).
- * Up to three `MediaFigure`s in `GuideStep.Media` share a hover thumbnail gallery.
+ * Requires at least one `MediaFigure` in `GuideStep.Media` and one `GuideStep.Bullet`
+ * in `GuideStep.Bullets`. Up to three images share a hover thumbnail gallery.
  */
 export const GuideStep = Object.assign(GuideStepRoot, {
   Media: GuideStepMedia,

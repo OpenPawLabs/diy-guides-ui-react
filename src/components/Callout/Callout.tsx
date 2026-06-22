@@ -1,15 +1,15 @@
 import type { ReactNode } from "react";
 import { Alert } from "@heroui/react";
 import {
-  type GuideSeverity,
-  severityColor,
-  severityLabel,
-} from "../../types/severity";
+  type CalloutType,
+  calloutTypeColor,
+  calloutTypeLabel,
+} from "../../types/callout";
 
-export interface WarningCalloutProps {
+export interface CalloutProps {
   /** Tone of the callout — controls color, default icon, and default title. @default "caution" */
-  severity?: GuideSeverity;
-  /** Heading text. Pass `null` to omit. Defaults to the severity label. */
+  type?: CalloutType;
+  /** Heading text. Pass `null` to omit. Defaults to the callout type label. */
   title?: ReactNode;
   /** Override the leading indicator icon. */
   icon?: ReactNode;
@@ -36,7 +36,7 @@ const circleCheck = (
   </>
 );
 
-const severityGlyph: Record<GuideSeverity, ReactNode> = {
+const calloutTypeGlyph: Record<CalloutType, ReactNode> = {
   note: circleInfo,
   info: circleInfo,
   tip: circleCheck,
@@ -44,7 +44,7 @@ const severityGlyph: Record<GuideSeverity, ReactNode> = {
   danger: triangle,
 };
 
-function SeverityIcon({ severity }: { severity: GuideSeverity }) {
+function CalloutTypeIcon({ type }: { type: CalloutType }) {
   return (
     <svg
       aria-hidden="true"
@@ -56,28 +56,28 @@ function SeverityIcon({ severity }: { severity: GuideSeverity }) {
       strokeLinejoin="round"
       className="size-5"
     >
-      {severityGlyph[severity]}
+      {calloutTypeGlyph[type]}
     </svg>
   );
 }
 
 /**
  * Safety / informational callout for guides — battery, heat, ESD, and other
- * hazards. Wraps HeroUI `Alert`, mapping {@link GuideSeverity} to the matching
- * status, default icon, and title so a single `severity` prop styles the whole box.
+ * hazards. Wraps HeroUI `Alert`, mapping {@link CalloutType} to the matching
+ * status, default icon, and title so a single `type` prop styles the whole box.
  */
-export function WarningCallout({
-  severity = "caution",
+export function Callout({
+  type = "caution",
   title,
   icon,
   children,
   className,
-}: WarningCalloutProps) {
-  const resolvedTitle = title === undefined ? severityLabel[severity] : title;
+}: CalloutProps) {
+  const resolvedTitle = title === undefined ? calloutTypeLabel[type] : title;
 
   return (
-    <Alert status={severityColor[severity]} className={className}>
-      <Alert.Indicator>{icon ?? <SeverityIcon severity={severity} />}</Alert.Indicator>
+    <Alert status={calloutTypeColor[type]} className={className}>
+      <Alert.Indicator>{icon ?? <CalloutTypeIcon type={type} />}</Alert.Indicator>
       <Alert.Content>
         {resolvedTitle != null && <Alert.Title>{resolvedTitle}</Alert.Title>}
         <Alert.Description>{children}</Alert.Description>

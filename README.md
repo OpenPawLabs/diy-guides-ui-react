@@ -13,10 +13,10 @@ Active development. The core guide component set is implemented, tested, and doc
 | `GuideStep` | A single step — number badge, completion checkbox, media, and bulleted instructions |
 | `MediaFigure` | Image/video with caption and percentage-positioned annotation markers |
 | `ToolList` | Titled card of required tools and parts |
-| `WarningCallout` | Safety / informational callout (note → danger) |
+| `Callout` | Safety / informational callout (`note` → `danger` types) |
 | `DifficultyBadge` | Color-coded difficulty pill (easy / moderate / difficult) |
 
-All tone is driven by a shared `GuideSeverity` token (`note · info · tip · caution · danger`) that maps onto HeroUI semantic colors, so step bullets, image annotations, and callouts stay visually consistent.
+Guide colors (`COLORS` / `GuideColor`) link step bullet dots to image annotation markers. Callout types (`CalloutType`) drive safety and informational tone in `Callout` boxes.
 
 ## Tech stack
 
@@ -44,7 +44,7 @@ pnpm build      # Build library to dist/
 src/
   components/     # One folder per component (tsx, stories, tests, index)
   hooks/          # Shared hooks (e.g. useControlledState)
-  types/          # Shared design tokens (severity) and types
+  types/          # Shared design tokens (colors, callout types) and types
   styles/         # Tailwind + HeroUI CSS entry
   index.ts        # Public API exports
 .storybook/       # Storybook configuration
@@ -74,7 +74,7 @@ import {
   GuideStep,
   MediaFigure,
   ToolList,
-  WarningCallout,
+  Callout,
 } from "@openpawlabs/diy-guides-ui";
 
 export function BatteryGuide() {
@@ -97,20 +97,20 @@ export function BatteryGuide() {
       </GuideLayout.Sidebar>
 
       <GuideLayout.Content>
-        <WarningCallout severity="danger" title="Battery safety">
+        <Callout type="danger" title="Battery safety">
           A punctured lithium battery can catch fire. Work slowly.
-        </WarningCallout>
+        </Callout>
         <GuideStepList>
           <GuideStep title="Open the case">
             <GuideStep.Media>
               <MediaFigure
                 src="/step-1.jpg"
                 alt="Opening the case"
-                annotations={[{ x: 50, y: 45, severity: "caution", label: 1 }]}
+                annotations={[{ x: 50, y: 45, color: "ORANGE", label: 1 }]}
               />
             </GuideStep.Media>
             <GuideStep.Bullets>
-              <GuideStep.Bullet severity="caution">
+              <GuideStep.Bullet color="ORANGE">
                 Soften the adhesive with even heat before prying.
               </GuideStep.Bullet>
             </GuideStep.Bullets>

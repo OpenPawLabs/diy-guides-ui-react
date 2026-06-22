@@ -11,6 +11,30 @@ const preview: Preview = {
       },
     },
     layout: "padded",
+    options: {
+      storySort: {
+        order: [
+          "Getting Started",
+          [
+            "Overview",
+            "Installation",
+            "Anatomy of a Guide",
+            "Colors & callouts",
+            "Writing Great Guides",
+          ],
+          "Guide",
+          [
+            "GuideLayout",
+            "GuideStepList",
+            "GuideStep",
+            "MediaFigure",
+            "ToolList",
+            "Callout",
+            "DifficultyBadge",
+          ],
+        ],
+      },
+    },
   },
   decorators: [
     withThemeByClassName({

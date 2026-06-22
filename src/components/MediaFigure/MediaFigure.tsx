@@ -1,16 +1,18 @@
 import type { CSSProperties, ReactNode } from "react";
 import { cn } from "@heroui/react";
 import {
-  type GuideSeverity,
-  severityMarkerClass,
-} from "../../types/severity";
+  COLORS,
+  hexToRgba,
+  markerTextColor,
+  type GuideColor,
+} from "../../types/colors";
 
 /** Shared fields for every annotation shape. */
 interface MediaAnnotationBase {
   /** Stable key; falls back to array index. */
   id?: string;
-  /** Marker tone — match the related step bullet for visual linking. @default "note" */
-  severity?: GuideSeverity;
+  /** Marker color — match the related step bullet for visual linking. @default "GREY" */
+  color?: GuideColor;
   /** Accessible description / tooltip for the marker. */
   title?: string;
 }
@@ -56,14 +58,6 @@ export type MediaAnnotation =
   | CircleAnnotation
   | RectangleAnnotation;
 
-const severityOutlineClass: Record<GuideSeverity, string> = {
-  note: "border-foreground/80 bg-foreground/10",
-  info: "border-accent bg-accent/10",
-  tip: "border-success bg-success/10",
-  caution: "border-warning bg-warning/10",
-  danger: "border-danger bg-danger/10",
-};
-
 function isCircleAnnotation(
   annotation: MediaAnnotation,
 ): annotation is CircleAnnotation {
@@ -78,7 +72,8 @@ function isRectangleAnnotation(
 
 function renderAnnotation(annotation: MediaAnnotation, index: number) {
   const key = annotation.id ?? index;
-  const severity = annotation.severity ?? "note";
+  const color = annotation.color ?? "GREY";
+  const hex = COLORS[color];
 
   if (isCircleAnnotation(annotation)) {
     return (
@@ -86,16 +81,15 @@ function renderAnnotation(annotation: MediaAnnotation, index: number) {
         key={key}
         role="img"
         aria-label={annotation.title}
-        className={cn(
-          "pointer-events-none absolute rounded-full border-2",
-          severityOutlineClass[severity],
-        )}
+        className="pointer-events-none absolute rounded-full border-2"
         style={{
           left: `${annotation.x}%`,
           top: `${annotation.y}%`,
           width: `${annotation.radius * 2}%`,
           aspectRatio: "1",
           transform: "translate(-50%, -50%)",
+          borderColor: hex,
+          backgroundColor: hexToRgba(hex, 0.1),
         }}
       />
     );
@@ -112,15 +106,14 @@ function renderAnnotation(annotation: MediaAnnotation, index: number) {
         key={key}
         role="img"
         aria-label={annotation.title}
-        className={cn(
-          "pointer-events-none absolute border-2",
-          severityOutlineClass[severity],
-        )}
+        className="pointer-events-none absolute border-2"
         style={{
           left: `${left}%`,
           top: `${top}%`,
           width: `${width}%`,
           height: `${height}%`,
+          borderColor: hex,
+          backgroundColor: hexToRgba(hex, 0.1),
         }}
       />
     );
@@ -131,11 +124,13 @@ function renderAnnotation(annotation: MediaAnnotation, index: number) {
       key={key}
       role="img"
       aria-label={annotation.title}
-      style={{ left: `${annotation.x}%`, top: `${annotation.y}%` }}
-      className={cn(
-        "absolute flex min-h-6 min-w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full px-1.5 text-xs font-semibold shadow ring-2 ring-background",
-        severityMarkerClass[severity],
-      )}
+      style={{
+        left: `${annotation.x}%`,
+        top: `${annotation.y}%`,
+        backgroundColor: hex,
+        color: markerTextColor(hex),
+      }}
+      className="absolute flex min-h-6 min-w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full px-1.5 text-xs font-semibold shadow ring-2 ring-background"
     >
       {annotation.label}
     </span>
@@ -160,9 +155,9 @@ export interface MediaFigureProps {
 
 /**
  * Instructional image or video with an optional caption and percentage-positioned
- * annotation overlays. Point markers use {@link GuideSeverity} colors so they can be
+ * annotation overlays. Point markers use {@link GuideColor} values so they can be
  * visually linked to matching `GuideStep` bullets; circles and rectangles use the
- * same severity for their outline and fill.
+ * same color for their outline and fill.
  */
 export function MediaFigure({
   src,

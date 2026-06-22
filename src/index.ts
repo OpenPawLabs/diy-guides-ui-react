@@ -1,14 +1,13 @@
 import "./styles/index.css";
 
 // Shared design tokens
+export { COLORS, hexToRgba, markerTextColor, type GuideColor } from "./types/colors";
 export {
-  type GuideSeverity,
+  type CalloutType,
   type HeroSemanticColor,
-  severityColor,
-  severityDotClass,
-  severityMarkerClass,
-  severityLabel,
-} from "./types/severity";
+  calloutTypeColor,
+  calloutTypeLabel,
+} from "./types/callout";
 
 // Guide components
 export { DifficultyBadge } from "./components/DifficultyBadge";
@@ -17,8 +16,8 @@ export type {
   Difficulty,
 } from "./components/DifficultyBadge";
 
-export { WarningCallout } from "./components/WarningCallout";
-export type { WarningCalloutProps } from "./components/WarningCallout";
+export { Callout } from "./components/Callout";
+export type { CalloutProps } from "./components/Callout";
 
 export { MediaFigure } from "./components/MediaFigure";
 export type {

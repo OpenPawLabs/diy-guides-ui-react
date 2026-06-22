@@ -43,7 +43,8 @@ src/
   hooks/
     useControlledState.ts  # Controlled/uncontrolled state bridge
   types/
-    severity.ts            # GuideSeverity token + HeroUI color maps
+    colors.ts              # GuideColor palette (hex-backed)
+    callout.ts             # CalloutType token + HeroUI color maps
   stories/
     Welcome.stories.tsx    # Foundation / onboarding stories only
   test/
@@ -60,7 +61,7 @@ src/
 |------|----------|
 | New guide component | `src/components/<Name>/` |
 | Public export | Add to `src/index.ts` |
-| Shared types / design tokens | `src/types/` (e.g. `severity.ts`) |
+| Shared types / design tokens | `src/types/` (e.g. `colors.ts`, `callout.ts`) |
 | Shared hooks | `src/hooks/` (e.g. `useControlledState.ts`) |
 | Shared utilities | `src/utils/` (create when needed) |
 | Design tokens / theme overrides | `src/styles/index.css` (`@theme` block) |
@@ -95,11 +96,19 @@ Docs: https://heroui.com/docs/react/getting-started/quick-start
 
 - Co-locate `*.stories.tsx` with components.
 - Use `tags: ["autodocs"]` for documented components.
-- Story groups:
-  - `Foundation/*` — setup, tokens, welcome content
-  - `Components/*` — generic UI building blocks
-  - `Guide/*` — iFixit-style guide primitives (steps, tools, warnings, media)
+- Story groups (sidebar order is set by `storySort` in `.storybook/preview.tsx`):
+  - `Getting Started/*` — narrative docs (Overview, Installation, Anatomy of a Guide, Severity, Writing Great Guides), authored as full-screen rendered pages in `src/stories/Welcome.stories.tsx`.
+  - `Guide/*` — the guide components, each with a live API reference page.
 - Dark mode: `withThemeByClassName` is configured in `.storybook/preview.tsx`; use the `dark` class on `html`/`body`.
+
+### Documentation conventions
+
+The autodocs prop tables come from prop JSDoc, but the human-facing explanation lives in story parameters. When adding or changing a component:
+
+- Give the `meta` a `parameters.docs.description.component` string (Markdown) that covers **what it is, when to use it, key props/concepts** (tables welcome), and how it relates to other components. Reference the `Getting Started → Colors & callouts` page instead of re-explaining colors and callout types.
+- Give each story a `parameters.docs.description.story` explaining what that example demonstrates.
+- Keep one autodocs page per component. Document compound parts (e.g. `GuideStep.Media`, `GuideStep.Bullet`) **within** the parent component's page and example stories — do not create separate `*.Part.stories.tsx` files.
+- Markdown in description strings is written in template literals, so escape backticks (`` \` ``) used for inline code and fenced examples.
 
 **Storybook Vite isolation:** Storybook uses `.storybook/vite.config.ts` (Tailwind only). Do **not** merge the root `vite.config.ts` library plugins into Storybook — `@storybook/react-vite` already registers `@vitejs/plugin-react`, and duplicating it causes `inWebWorker` / `prevRefreshReg` transform errors.
 
@@ -150,13 +159,17 @@ React and React DOM are **peer dependencies** — the host app provides them.
 
 The `Guide/*` set is implemented under `src/components/` and exported from `src/index.ts`. They follow a **composition-first** API (compound components via dot notation) modeled on iFixit guide UX.
 
-### Shared severity token
+### Guide colors
 
-`src/types/severity.ts` defines `GuideSeverity` (`note · info · tip · caution · danger`) and maps it onto HeroUI semantic colors. It is the single source of tone for step bullets, image annotations, and callouts — reuse it instead of hardcoding colors.
+`src/types/colors.ts` defines `COLORS` — a fixed palette of eight named hex values (`GREY`, `RED`, `ORANGE`, `YELLOW`, `GREEN`, `LIGHT_BLUE`, `BLUE`, `MAGENTA`) used to visually link `GuideStep.Bullet` dot markers to `MediaFigure` annotation markers. Colors are labels for parts/locations, not warning levels.
 
-| Severity | HeroUI color | Typical use |
+### Callout types
+
+`src/types/callout.ts` defines `CalloutType` (`note · info · tip · caution · danger`) and maps it onto HeroUI semantic colors for the `Callout` component.
+
+| Type | HeroUI color | Typical use |
 |----------|--------------|-------------|
-| `note` | default | neutral instruction |
+| `note` | default | neutral detail |
 | `info` | accent | reversible / informational |
 | `tip` | success | helpful suggestion, reassembly |
 | `caution` | warning | minor hazard |
@@ -165,17 +178,17 @@ The `Guide/*` set is implemented under `src/components/` and exported from `src/
 ### Components
 
 - **DifficultyBadge** — `<DifficultyBadge difficulty="moderate" />`. Color-coded pill (easy → green, moderate → amber, difficult → red) with an optional gauge icon.
-- **WarningCallout** — `<WarningCallout severity="danger" title="…">…</WarningCallout>`. Wraps HeroUI `Alert`; `severity` drives status, default icon, and default title.
-- **MediaFigure** — `<MediaFigure src alt caption annotations={[…]} />`. Image/video with caption and percentage-positioned overlays. Annotation types: `point` (`x`, `y`, optional `label`), `circle` (`x`, `y`, `radius`), `rectangle` (`x1`, `y1`, `x2`, `y2`). Only `point` markers show a label; all types accept `severity` and `title`.
+- **Callout** — `<Callout type="danger" title="…">…</Callout>`. Wraps HeroUI `Alert`; `type` drives status, default icon, and default title.
+- **MediaFigure** — `<MediaFigure src alt caption annotations={[…]} />`. Image/video with caption and percentage-positioned overlays. Annotation types: `point` (`x`, `y`, optional `label`), `circle` (`x`, `y`, `radius`), `rectangle` (`x1`, `y1`, `x2`, `y2`). Only `point` markers show a label; all types accept `color` and `title`.
 - **ToolList** + **ToolList.Item** — titled card listing tools/parts (`name`, `thumbnail`, `href`, `quantity`, `price`).
-- **GuideStep** + **GuideStep.Media** / **GuideStep.Bullets** / **GuideStep.Bullet** — a numbered step with a two-column body (main image left; hover thumbnails + bullets right). Up to **three** `MediaFigure`s in `.Media` share a thumbnail gallery — hover/focus a thumb to swap the main image. Stacks on viewports below `sm`. Completion is controllable (`isCompleted` / `onCompletedChange`) or uncontrolled (`defaultCompleted`).
+- **GuideStep** + **GuideStep.Media** / **GuideStep.Bullets** / **GuideStep.Bullet** — a numbered step with a two-column body (main image left; hover thumbnails + bullets right). Bullets use `variant="dot"` with a `color` to link to image markers, or semantic variants (`caution`, `reminder`, `note`) for inline warnings and notes. Up to **three** `MediaFigure`s in `.Media` share a thumbnail gallery — hover/focus a thumb to swap the main image. Stacks on viewports below `sm`. Completion is controllable (`isCompleted` / `onCompletedChange`) or uncontrolled (`defaultCompleted`).
 - **GuideStepList** — wraps `GuideStep`s; auto-numbers them, owns their completion state, and renders a derived progress bar. Listen via `onProgressChange`.
 - **GuideLayout** + **GuideLayout.Header** / **GuideLayout.Intro** / **GuideLayout.Sidebar** / **GuideLayout.Content** — responsive page shell: full-width header, then intro copy beside tools/parts, then full-width steps. On mobile the intro row stacks (intro first, sidebar second).
 
 ### Conventions for new guide components
 
 - Compose HeroUI primitives; expose compound parts with `Object.assign(Root, { Part })`.
-- Reuse `GuideSeverity` for any tone/color decision.
+- Reuse `GuideColor` for bullet/annotation linking and `CalloutType` for callout tone.
 - Add `"use client"` only to components that use state, effects, or handlers (e.g. `GuideStep`, `GuideStepList`).
 - Keep media/positional data as props (e.g. `annotations`); keep structure as composable children.
 

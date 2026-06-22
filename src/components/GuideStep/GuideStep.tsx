@@ -11,11 +11,8 @@ import {
 } from "react";
 import { Checkbox, cn } from "@heroui/react";
 import { useControlledState } from "../../hooks/useControlledState";
-import {
-  type GuideSeverity,
-  severityDotClass,
-  severityLabel,
-} from "../../types/severity";
+import { calloutTypeLabel } from "../../types/callout";
+import { COLORS, type GuideColor } from "../../types/colors";
 import { MediaFigure, type MediaFigureProps } from "../MediaFigure";
 
 const MAX_STEP_IMAGES = 3;
@@ -38,18 +35,18 @@ export interface GuideStepProps {
   className?: string;
 }
 
-/** Bullet presentation — `color` uses a severity dot; others use semantic icons and labels. */
-export type GuideStepBulletVariant = "color" | "caution" | "reminder" | "note";
+/** Bullet presentation — `dot` uses a colored dot; others use semantic icons and labels. */
+export type GuideStepBulletVariant = "dot" | "caution" | "reminder" | "note";
 
 export interface GuideStepBulletProps {
   /**
-   * Bullet style. `color` renders a severity-colored dot (link to `MediaFigure`
+   * Bullet style. `dot` renders a colored dot (link to `MediaFigure`
    * annotations); `caution`, `reminder`, and `note` render iFixit-style semantic bullets.
-   * @default "color"
+   * @default "dot"
    */
   variant?: GuideStepBulletVariant;
-  /** Marker tone for `color` bullets — match a related `MediaFigure` annotation. @default "note" */
-  severity?: GuideSeverity;
+  /** Marker color for `dot` bullets — match a related `MediaFigure` annotation. @default "GREY" */
+  color?: GuideColor;
   /** Override the auto-generated label for semantic bullet types. */
   label?: ReactNode;
   /** Hide the auto-generated label for `caution`, `reminder`, and `note` bullets. */
@@ -59,12 +56,12 @@ export interface GuideStepBulletProps {
 }
 
 const bulletVariantLabel: Record<
-  Exclude<GuideStepBulletVariant, "color">,
+  Exclude<GuideStepBulletVariant, "dot">,
   string
 > = {
-  caution: severityLabel.caution,
+  caution: calloutTypeLabel.caution,
   reminder: "Reminder",
-  note: severityLabel.note,
+  note: calloutTypeLabel.note,
 };
 
 function CautionIcon() {
@@ -179,7 +176,7 @@ function extractStepParts(children: ReactNode) {
 }
 
 /** Slot for up to three `MediaFigure`s — parent renders main image + hover thumbnails. */
-function GuideStepMedia({ children: _children }: { children?: ReactNode }) {
+function GuideStepMedia(_props: { children?: ReactNode }) {
   return null;
 }
 
@@ -196,24 +193,22 @@ function GuideStepBullets({
   );
 }
 
-/** A single instruction line — color dots or semantic caution / reminder / note bullets. */
+/** A single instruction line — dot bullets or semantic caution / reminder / note bullets. */
 function GuideStepBullet({
-  variant = "color",
-  severity = "note",
+  variant = "dot",
+  color = "GREY",
   label,
   hideLabel = false,
   children,
   className,
 }: GuideStepBulletProps) {
-  if (variant === "color") {
+  if (variant === "dot") {
     return (
       <li className={cn("flex gap-2.5", className)}>
         <span
           aria-hidden="true"
-          className={cn(
-            "mt-1.5 size-2 shrink-0 rounded-full",
-            severityDotClass[severity],
-          )}
+          className="mt-1.5 size-2 shrink-0 rounded-full"
+          style={{ backgroundColor: COLORS[color] }}
         />
         <span className="flex-1">{children}</span>
       </li>

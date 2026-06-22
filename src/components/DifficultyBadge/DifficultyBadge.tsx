@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Chip } from "@heroui/react";
-import type { HeroSemanticColor } from "../../types/severity";
+import type { HeroSemanticColor } from "../../types/callout";
 
 /** Relative effort required to complete a guide. */
 export type Difficulty = "easy" | "moderate" | "difficult";

@@ -4,12 +4,35 @@ import { GuideStepList } from "../GuideStepList";
 import { GuideStep } from "../GuideStep";
 import { MediaFigure } from "../MediaFigure";
 import { ToolList } from "../ToolList";
-import { WarningCallout } from "../WarningCallout";
+import { Callout } from "../Callout";
+
+const componentDocs = `The responsive page shell for a complete guide. It arranges four regions, each a
+compound part:
+
+- \`GuideLayout.Header\` — the title plus optional difficulty, time estimate, and a
+  byline/metadata line. Difficulty renders as a \`DifficultyBadge\` and the time
+  estimate as a chip.
+- \`GuideLayout.Intro\` — the overview paragraph(s).
+- \`GuideLayout.Sidebar\` — "what you need", typically one or two \`ToolList\`s.
+- \`GuideLayout.Content\` — the full-width body, usually a \`Callout\` and a
+  \`GuideStepList\`.
+
+On desktop the header spans the top, the intro sits beside the sidebar, and the
+content runs full width below. On mobile everything stacks in source order:
+header, intro, sidebar, then content.
+
+## Header props
+
+\`title\` is required; \`difficulty\`, \`timeEstimate\`, and \`meta\` are optional and
+only render when provided.`;
 
 const meta = {
   title: "Guide/GuideLayout",
   component: GuideLayout,
-  parameters: { layout: "fullscreen" },
+  parameters: {
+    layout: "fullscreen",
+    docs: { description: { component: componentDocs } },
+  },
   tags: ["autodocs"],
   args: { children: null },
 } satisfies Meta<typeof GuideLayout>;
@@ -19,6 +42,14 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const FullGuide: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "A complete page: header with difficulty and time, an intro beside the tools/parts sidebar, then a warning and the numbered steps in the content column.",
+      },
+    },
+  },
   render: () => (
     <div className="p-6">
       <GuideLayout>
@@ -46,10 +77,10 @@ export const FullGuide: Story = {
         </GuideLayout.Sidebar>
 
         <GuideLayout.Content>
-          <WarningCallout severity="danger" title="Battery safety">
+          <Callout type="danger" title="Battery safety">
             A swollen or punctured lithium battery can catch fire. Work slowly and
             never force a swollen cell.
-          </WarningCallout>
+          </Callout>
           <div className="mt-8">
             <GuideStepList>
               <GuideStep title="Soften the adhesive and open the case">
@@ -57,7 +88,7 @@ export const FullGuide: Story = {
                   <MediaFigure
                     src="https://placehold.co/800x600/e2e8f0/1e293b/png?text=Heat+edges"
                     alt="Heating the rear glass"
-                    annotations={[{ x: 50, y: 45, severity: "caution", label: 1 }]}
+                    annotations={[{ x: 50, y: 45, color: "ORANGE", label: 1 }]}
                   />
                   <MediaFigure
                     src="https://placehold.co/800x600/dbeafe/1e40af/png?text=Pry+clips"
@@ -69,7 +100,7 @@ export const FullGuide: Story = {
                   />
                 </GuideStep.Media>
                 <GuideStep.Bullets>
-                  <GuideStep.Bullet severity="caution">
+                  <GuideStep.Bullet color="ORANGE">
                     Apply heat along the edges for about a minute.
                   </GuideStep.Bullet>
                   <GuideStep.Bullet>
@@ -86,7 +117,7 @@ export const FullGuide: Story = {
                   />
                 </GuideStep.Media>
                 <GuideStep.Bullets>
-                  <GuideStep.Bullet severity="danger">
+                  <GuideStep.Bullet variant="caution">
                     Disconnect the battery connector before anything else.
                   </GuideStep.Bullet>
                   <GuideStep.Bullet>
@@ -106,13 +137,71 @@ export const FullGuide: Story = {
                   <GuideStep.Bullet>
                     Seat the new battery and reconnect the connector.
                   </GuideStep.Bullet>
-                  <GuideStep.Bullet severity="tip">
+                  <GuideStep.Bullet variant="note">
                     Reassemble by following these steps in reverse order.
                   </GuideStep.Bullet>
                 </GuideStep.Bullets>
               </GuideStep>
             </GuideStepList>
           </div>
+        </GuideLayout.Content>
+      </GuideLayout>
+    </div>
+  ),
+};
+
+export const WithoutSidebar: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "The sidebar is optional. Omit `GuideLayout.Sidebar` and the intro and content span the full width — useful for guides that need no tools or parts.",
+      },
+    },
+  },
+  render: () => (
+    <div className="p-6">
+      <GuideLayout>
+        <GuideLayout.Header
+          title="Calibrate the Display"
+          difficulty="easy"
+          timeEstimate="5 minutes"
+        />
+
+        <GuideLayout.Intro>
+          A quick, tool-free calibration to get accurate colors. No parts
+          required.
+        </GuideLayout.Intro>
+
+        <GuideLayout.Content>
+          <GuideStepList>
+            <GuideStep title="Open display settings">
+              <GuideStep.Media>
+                <MediaFigure
+                  src="https://placehold.co/800x600/e2e8f0/1e293b/png?text=Settings"
+                  alt="Display settings screen"
+                />
+              </GuideStep.Media>
+              <GuideStep.Bullets>
+                <GuideStep.Bullet>
+                  Open Settings and choose Display, then Calibrate.
+                </GuideStep.Bullet>
+              </GuideStep.Bullets>
+            </GuideStep>
+            <GuideStep title="Follow the on-screen targets">
+              <GuideStep.Media>
+                <MediaFigure
+                  src="https://placehold.co/800x600/dbeafe/1e40af/png?text=Calibrate"
+                  alt="Calibration target"
+                />
+              </GuideStep.Media>
+              <GuideStep.Bullets>
+                <GuideStep.Bullet variant="note">
+                  Sit at your normal viewing distance for the best result.
+                </GuideStep.Bullet>
+              </GuideStep.Bullets>
+            </GuideStep>
+          </GuideStepList>
         </GuideLayout.Content>
       </GuideLayout>
     </div>

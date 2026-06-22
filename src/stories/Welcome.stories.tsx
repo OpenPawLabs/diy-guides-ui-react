@@ -1,10 +1,19 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Button } from "@heroui/react";
+import type { ReactNode } from "react";
+import { Callout } from "../components/Callout";
+import { COLORS, type GuideColor } from "../types/colors";
+import { calloutTypeLabel, type CalloutType } from "../types/callout";
 
+/**
+ * Narrative documentation for the library. These pages explain what DIY Guides
+ * UI is, how to install it, how a guide is composed, the guide color palette
+ * and callout types, and how to write guides people can actually follow.
+ * Component-level API reference lives under the "Guide" section.
+ */
 const meta = {
-  title: "Foundation/Welcome",
+  title: "Getting Started",
   parameters: {
-    layout: "centered",
+    layout: "fullscreen",
   },
 } satisfies Meta;
 
@@ -12,18 +21,536 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-export const GettingStarted: Story = {
-  render: () => (
-    <div className="flex max-w-md flex-col gap-4 p-8 text-center">
-      <h1 className="text-2xl font-semibold">DIY Guides UI</h1>
-      <p className="text-default-500">
-        Open-source React components for iFixit-style step-by-step DIY
-        guides. HeroUI, Storybook, and Vite are configured — add components
-        under <code>src/components/</code>.
+const installExample = `pnpm add @openpawlabs/diy-guides-ui @heroui/react @heroui/styles tailwindcss`;
+
+const stylesExample = `@import "tailwindcss";
+@import "@heroui/styles";
+@import "@openpawlabs/diy-guides-ui/styles";`;
+
+const importsExample = `import "@openpawlabs/diy-guides-ui/styles";
+import {
+  GuideLayout,
+  GuideStepList,
+  GuideStep,
+  MediaFigure,
+  ToolList,
+  Callout,
+} from "@openpawlabs/diy-guides-ui";`;
+
+const guideExample = `<GuideLayout>
+  <GuideLayout.Header
+    title="Replace a Smartphone Battery"
+    difficulty="moderate"
+    timeEstimate="20-30 minutes"
+    meta="Updated Jun 2026"
+  />
+
+  <GuideLayout.Intro>
+    A worn battery drains fast and can swell. This guide walks through a
+    safe replacement using common repair tools.
+  </GuideLayout.Intro>
+
+  <GuideLayout.Sidebar>
+    <ToolList title="Tools">
+      <ToolList.Item name="Pro Tech Toolkit" href="#" price="$67.96" />
+      <ToolList.Item name="iOpener" price="$14.99" />
+    </ToolList>
+    <ToolList title="Parts">
+      <ToolList.Item name="Replacement battery" quantity={1} />
+    </ToolList>
+  </GuideLayout.Sidebar>
+
+  <GuideLayout.Content>
+    <Callout type="danger" title="Battery safety">
+      Do not puncture or bend the battery. A damaged lithium cell can ignite.
+    </Callout>
+
+    <GuideStepList>
+      <GuideStep title="Soften the adhesive">
+        <GuideStep.Media>
+          <MediaFigure
+            src="/guides/battery-heat.jpg"
+            alt="Heating the phone edge with an iOpener"
+            annotations={[{ x: 54, y: 42, color: "ORANGE", label: 1 }]}
+          />
+        </GuideStep.Media>
+        <GuideStep.Bullets>
+          <GuideStep.Bullet color="ORANGE">
+            Heat the edge evenly for about a minute before prying.
+          </GuideStep.Bullet>
+          <GuideStep.Bullet>
+            Slide a pick under the back cover and release the clips.
+          </GuideStep.Bullet>
+        </GuideStep.Bullets>
+      </GuideStep>
+    </GuideStepList>
+  </GuideLayout.Content>
+</GuideLayout>`;
+
+const layers = [
+  {
+    group: "The shell",
+    items: [
+      {
+        name: "GuideLayout",
+        description:
+          "The page frame: header, intro, a tools/parts sidebar, and the full-width content column. Start here.",
+      },
+    ],
+  },
+  {
+    group: "The step sequence",
+    items: [
+      {
+        name: "GuideStepList",
+        description:
+          "Wraps your steps. Numbers them in order, tracks completion, and shows a progress bar — automatically.",
+      },
+      {
+        name: "GuideStep",
+        description:
+          "One step: a numbered header, a main image with optional thumbnails, and bulleted instructions beside it.",
+      },
+      {
+        name: "MediaFigure",
+        description:
+          "The image or video for a step, with captions and markers that point at the exact spot to work on.",
+      },
+    ],
+  },
+  {
+    group: "Supporting blocks",
+    items: [
+      {
+        name: "ToolList",
+        description:
+          "The \u201cwhat you need\u201d card. Use one list for tools and another for parts.",
+      },
+      {
+        name: "Callout",
+        description:
+          "Safety and context callouts, styled by type, for moments that need extra attention.",
+      },
+      {
+        name: "DifficultyBadge",
+        description:
+          "A small easy / moderate / difficult pill. GuideLayout.Header renders one for you.",
+      },
+    ],
+  },
+];
+
+const calloutTypes: {
+  type: CalloutType;
+  usedFor: string;
+  example: string;
+}[] = [
+  {
+    type: "note",
+    usedFor: "Neutral detail worth calling out.",
+    example: "Keep screws grouped — they are not all the same length.",
+  },
+  {
+    type: "info",
+    usedFor: "Context that changes how a step is understood; reversible actions.",
+    example: "This step is reversible — you can stop here and reassemble.",
+  },
+  {
+    type: "tip",
+    usedFor: "A shortcut, reassembly hint, or optional improvement.",
+    example: "A guitar pick releases the clips without scratching the case.",
+  },
+  {
+    type: "caution",
+    usedFor: "A moderate hazard: adhesive, sharp edges, fragile clips.",
+    example: "The adhesive is strong. Apply gentle, even heat before prying.",
+  },
+  {
+    type: "danger",
+    usedFor: "A serious hazard: fire, shock, chemicals, or injury.",
+    example: "Do not puncture the battery. A damaged cell can ignite.",
+  },
+];
+
+const guideColors = Object.entries(COLORS) as [GuideColor, string][];
+
+function Page({ children }: { children: ReactNode }) {
+  return (
+    <main className="min-h-screen bg-background text-foreground">
+      <div className="mx-auto flex max-w-5xl flex-col gap-12 px-6 py-10 sm:px-8 lg:px-10">
+        {children}
+      </div>
+    </main>
+  );
+}
+
+function PageHeader({
+  eyebrow,
+  title,
+  children,
+}: {
+  eyebrow: string;
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <header className="flex max-w-3xl flex-col gap-4">
+      <p className="text-sm font-semibold uppercase tracking-wide text-accent">
+        {eyebrow}
       </p>
-      <Button variant="primary" onPress={() => undefined}>
-        Ready to build
-      </Button>
-    </div>
+      <h1 className="text-4xl font-bold tracking-tight">{title}</h1>
+      <p className="text-lg leading-8 text-default-600">{children}</p>
+    </header>
+  );
+}
+
+function Section({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="flex flex-col gap-4">
+      <h2 className="max-w-3xl text-2xl font-semibold tracking-tight">{title}</h2>
+      <div className="max-w-3xl text-base leading-7 text-default-600">
+        {children}
+      </div>
+    </section>
+  );
+}
+
+function CodeBlock({ children }: { children: string }) {
+  return (
+    <pre className="overflow-x-auto rounded-lg border border-default bg-default-soft p-4 text-sm leading-6 text-foreground">
+      <code>{children}</code>
+    </pre>
+  );
+}
+
+function InlineCode({ children }: { children: ReactNode }) {
+  return (
+    <code className="rounded bg-default-soft px-1.5 py-0.5 text-[0.9em] text-foreground">
+      {children}
+    </code>
+  );
+}
+
+export const Overview: Story = {
+  render: () => (
+    <Page>
+      <header className="flex max-w-3xl flex-col gap-5">
+        <p className="text-sm font-semibold uppercase tracking-wide text-accent">
+          DIY Guides UI
+        </p>
+        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
+          React components for clear, repairable step-by-step guides.
+        </h1>
+        <p className="text-lg leading-8 text-default-600">
+          DIY Guides UI gives repair and maker projects the UI pieces to teach a
+          real task: guide pages, tool lists, safety callouts, annotated media,
+          numbered steps, and progress. It is the presentation layer only —
+          your app keeps routing, data, auth, search, and publishing.
+        </p>
+      </header>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <article className="rounded-xl border border-default bg-content1 p-5">
+          <h2 className="font-semibold">Human first</h2>
+          <p className="mt-2 text-sm leading-6 text-default-600">
+            Components follow how someone actually works through a guide:
+            prepare, understand the risks, look at the picture, then act.
+          </p>
+        </article>
+        <article className="rounded-xl border border-default bg-content1 p-5">
+          <h2 className="font-semibold">Composition first</h2>
+          <p className="mt-2 text-sm leading-6 text-default-600">
+            Guides are written with dot-notation parts like{" "}
+            <InlineCode>GuideStep.Media</InlineCode> and{" "}
+            <InlineCode>ToolList.Item</InlineCode>, so the markup reads like the
+            finished page.
+          </p>
+        </article>
+        <article className="rounded-xl border border-default bg-content1 p-5">
+          <h2 className="font-semibold">App agnostic</h2>
+          <p className="mt-2 text-sm leading-6 text-default-600">
+            Built on React, TypeScript, HeroUI, and Tailwind CSS. Drop it into
+            any React app that can load the package styles.
+          </p>
+        </article>
+      </div>
+
+      <Section title="How to read these docs">
+        <p>Work through this section top to bottom:</p>
+        <ol className="mt-4 list-decimal space-y-2 pl-5">
+          <li>
+            <span className="font-medium text-foreground">Installation</span> —
+            add the package and load its styles.
+          </li>
+          <li>
+            <span className="font-medium text-foreground">
+              Anatomy of a Guide
+            </span>{" "}
+            — see how the components nest into a full page.
+          </li>
+          <li>
+            <span className="font-medium text-foreground">
+              Colors &amp; callouts
+            </span>{" "}
+            — guide colors for linking bullets to images, and callout types for
+            safety tone.
+          </li>
+          <li>
+            <span className="font-medium text-foreground">
+              Writing Great Guides
+            </span>{" "}
+            — practical advice for clear, trustworthy steps.
+          </li>
+        </ol>
+        <p className="mt-4">
+          Then explore each component under the{" "}
+          <span className="font-medium text-foreground">Guide</span> section for
+          live examples and a full props reference.
+        </p>
+      </Section>
+
+      <Section title="When to use it">
+        <p>
+          Reach for DIY Guides UI when the UI itself has to teach: instructions
+          that mix explanation, media, safety, tools, and a specific order. It
+          fits hardware repair, maintenance, maker projects, teardown notes, and
+          internal service procedures. It is not a CMS, router, or database —
+          store guide data wherever your app already does and render it through
+          these components.
+        </p>
+      </Section>
+    </Page>
+  ),
+};
+
+export const Installation: Story = {
+  render: () => (
+    <Page>
+      <PageHeader eyebrow="Installation" title="Add the library to a React app.">
+        The package ships components, TypeScript types, and bundled styles. React
+        and React DOM are peer dependencies, so your app provides them.
+      </PageHeader>
+
+      <Section title="1. Install the package and its UI dependencies">
+        <CodeBlock>{installExample}</CodeBlock>
+        <p className="mt-3">
+          HeroUI and Tailwind CSS power the components&apos; look and behavior,
+          so they install alongside the library.
+        </p>
+      </Section>
+
+      <Section title="2. Load styles once, in the right order">
+        <p>
+          In your app&apos;s global stylesheet, import Tailwind first, then
+          HeroUI, then the library. Order matters — HeroUI&apos;s tokens build on
+          Tailwind, and the library builds on both.
+        </p>
+        <div className="mt-4">
+          <CodeBlock>{stylesExample}</CodeBlock>
+        </div>
+        <p className="mt-3">
+          There is no provider to add. Import components directly and they work.
+        </p>
+      </Section>
+
+      <Section title="3. Import the components you need">
+        <CodeBlock>{importsExample}</CodeBlock>
+      </Section>
+    </Page>
+  ),
+};
+
+export const AnatomyOfAGuide: Story = {
+  name: "Anatomy of a Guide",
+  render: () => (
+    <Page>
+      <PageHeader eyebrow="Anatomy" title="A guide is built from readable parts.">
+        The API mirrors the finished page, so a guide reads like an outline:
+        title, context, what you need, warnings, then the steps. Here is a
+        complete page and the role each piece plays.
+      </PageHeader>
+
+      <CodeBlock>{guideExample}</CodeBlock>
+
+      <Section title="The pieces, by role">
+        <div className="flex flex-col gap-6">
+          {layers.map((layer) => (
+            <div key={layer.group} className="flex flex-col gap-3">
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-accent">
+                {layer.group}
+              </h3>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {layer.items.map((item) => (
+                  <article
+                    key={item.name}
+                    className="rounded-lg border border-default bg-content1 p-4"
+                  >
+                    <h4 className="font-semibold">{item.name}</h4>
+                    <p className="mt-2 text-sm leading-6 text-default-600">
+                      {item.description}
+                    </p>
+                  </article>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </Section>
+    </Page>
+  ),
+};
+
+export const ColorsAndCallouts: Story = {
+  name: "Colors & callouts",
+  render: () => (
+    <Page>
+      <PageHeader
+        eyebrow="Shared language"
+        title="Two systems: colors for linking, types for tone."
+      >
+        Guide colors link step bullet dots to image annotation markers — useful
+        when several parts or locations share one photo. Callout types express
+        safety and informational tone in standalone callout boxes. They are
+        separate on purpose.
+      </PageHeader>
+
+      <Section title="Guide colors">
+        <p>
+          Use a <InlineCode>color</InlineCode> on both a{" "}
+          <InlineCode>MediaFigure</InlineCode> annotation and its matching{" "}
+          <InlineCode>GuideStep.Bullet</InlineCode> so the reader connects the
+          instruction to the spot on the photo. Pick any name from the palette —
+          the color is a label, not a warning level.
+        </p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {guideColors.map(([name, hex]) => (
+            <div
+              key={name}
+              className="flex items-center gap-3 rounded-lg border border-default bg-content1 p-3"
+            >
+              <span
+                aria-hidden="true"
+                className="size-6 shrink-0 rounded-full"
+                style={{ backgroundColor: hex }}
+              />
+              <div className="flex flex-col">
+                <span className="font-semibold">{name}</span>
+                <code className="text-xs text-default-500">{hex}</code>
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className="mt-4">
+          Example: three screw lengths in one image might use{" "}
+          <InlineCode>RED</InlineCode>, <InlineCode>BLUE</InlineCode>, and{" "}
+          <InlineCode>GREEN</InlineCode> — each bullet dot matches its marker.
+        </p>
+      </Section>
+
+      <Section title="Callout types">
+        <p>
+          <InlineCode>Callout</InlineCode> uses a <InlineCode>type</InlineCode>{" "}
+          prop for safety and informational tone. These five levels map to
+          HeroUI alert colors and default titles.
+        </p>
+        <div className="mt-4 flex flex-col gap-4">
+          {calloutTypes.map(({ type, usedFor, example }) => (
+            <div
+              key={type}
+              className="grid gap-4 rounded-lg border border-default bg-content1 p-4 md:grid-cols-[10rem_1fr]"
+            >
+              <div className="flex flex-col">
+                <span className="font-semibold">{calloutTypeLabel[type]}</span>
+                <code className="text-xs text-default-500">{type}</code>
+              </div>
+              <div className="flex flex-col gap-3">
+                <p className="text-sm leading-6 text-default-600">{usedFor}</p>
+                <Callout type={type}>{example}</Callout>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      <Section title="Why the split matters">
+        <p>
+          A red dot on a screw is not necessarily a danger warning — it might
+          just mean &ldquo;this is the 4 mm screw.&rdquo; Reserve callout types
+          for moments that need a safety or context box, and use guide colors
+          when you need the reader to match words to a place on the image.
+        </p>
+        <p className="mt-4">
+          For inline warnings inside a step, use semantic bullet variants —{" "}
+          <InlineCode>variant="caution"</InlineCode>,{" "}
+          <InlineCode>variant="reminder"</InlineCode>, or{" "}
+          <InlineCode>variant="note"</InlineCode> — instead of a colored dot.
+        </p>
+      </Section>
+    </Page>
+  ),
+};
+
+export const WritingGreatGuides: Story = {
+  render: () => (
+    <Page>
+      <PageHeader
+        eyebrow="Authoring"
+        title="Make each step easy to trust and easy to follow."
+      >
+        The components provide structure; clear writing does the rest. Keep each
+        step focused, connect the words to the picture, and save strong warnings
+        for the moments that change what the reader does.
+      </PageHeader>
+
+      <Section title="Step structure">
+        <ul className="list-disc space-y-3 pl-5">
+          <li>Use one step for one meaningful action or decision.</li>
+          <li>
+            Lead with the action, then the detail: &ldquo;Disconnect the battery
+            before&hellip;&rdquo; rather than burying it mid-sentence.
+          </li>
+          <li>
+            Prefer concrete verbs — lift, slide, disconnect, remove, inspect,
+            align, tighten.
+          </li>
+        </ul>
+      </Section>
+
+      <Section title="Media and annotations">
+        <ul className="list-disc space-y-3 pl-5">
+          <li>
+            Give every image useful alt text, even when a caption already
+            describes it.
+          </li>
+          <li>
+            Use point markers for precise spots, circles for areas, and
+            rectangles for zones such as a row of clips or an adhesive strip.
+          </li>
+          <li>
+            Match a marker&apos;s <InlineCode>color</InlineCode> to its bullet
+            so the reader can connect the instruction to the exact place on the
+            photo.
+          </li>
+        </ul>
+      </Section>
+
+      <Section title="Safety and tone">
+        <ul className="list-disc space-y-3 pl-5">
+          <li>
+            Put safety information before the action that creates the risk, not
+            after it.
+          </li>
+          <li>
+            Reserve <InlineCode>type="danger"</InlineCode> on callouts for
+            genuine hazards; use <InlineCode>type="caution"</InlineCode> for
+            ordinary care.
+          </li>
+          <li>
+            Keep tool and part names specific enough that a reader can gather
+            everything before they start.
+          </li>
+        </ul>
+      </Section>
+    </Page>
   ),
 };

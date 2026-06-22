@@ -1,19 +1,19 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { WarningCallout } from "./WarningCallout";
+import { Callout } from "./Callout";
 
-describe("WarningCallout", () => {
-  it("renders body content and a default title from the severity", () => {
-    render(<WarningCallout severity="danger">Lethal charge</WarningCallout>);
+describe("Callout", () => {
+  it("renders body content and a default title from the type", () => {
+    render(<Callout type="danger">Lethal charge</Callout>);
     expect(screen.getByText("Danger")).toBeInTheDocument();
     expect(screen.getByText("Lethal charge")).toBeInTheDocument();
   });
 
   it("uses a custom title when provided", () => {
     render(
-      <WarningCallout severity="caution" title="Hot surface">
+      <Callout type="caution" title="Hot surface">
         Let it cool
-      </WarningCallout>,
+      </Callout>,
     );
     expect(screen.getByText("Hot surface")).toBeInTheDocument();
     expect(screen.queryByText("Caution")).not.toBeInTheDocument();
@@ -21,9 +21,9 @@ describe("WarningCallout", () => {
 
   it("omits the title when explicitly set to null", () => {
     render(
-      <WarningCallout severity="note" title={null}>
+      <Callout type="note" title={null}>
         No heading here
-      </WarningCallout>,
+      </Callout>,
     );
     expect(screen.queryByText("Note")).not.toBeInTheDocument();
     expect(screen.getByText("No heading here")).toBeInTheDocument();

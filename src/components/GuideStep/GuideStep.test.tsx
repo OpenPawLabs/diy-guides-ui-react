@@ -1,6 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
+import { COLORS } from "../../types/colors";
 import { GuideStep } from "./GuideStep";
 import { MediaFigure } from "../MediaFigure";
 
@@ -129,6 +130,17 @@ describe("GuideStep", () => {
     );
     expect(screen.getByRole("img", { name: "Main step photo" })).toBeInTheDocument();
     expect(screen.getByText("Pry along the seam.")).toBeInTheDocument();
+  });
+
+  it("renders dot bullets with the selected color", () => {
+    const { container } = render(
+      <GuideStep.Bullets>
+        <GuideStep.Bullet color="RED">Remove the red screw.</GuideStep.Bullet>
+      </GuideStep.Bullets>,
+    );
+    const dot = container.querySelector("span[aria-hidden='true']");
+    expect(dot).toHaveStyle({ backgroundColor: COLORS.RED });
+    expect(screen.getByText("Remove the red screw.")).toBeInTheDocument();
   });
 
   it("renders semantic caution bullets with a label", () => {

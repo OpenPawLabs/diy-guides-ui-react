@@ -3,10 +3,27 @@ import { GuideStepList } from "./GuideStepList";
 import { GuideStep } from "../GuideStep";
 import { MediaFigure } from "../MediaFigure";
 
+const componentDocs = `Wraps a sequence of \`GuideStep\`s and handles the bookkeeping so you can focus on
+the instructions. Drop your steps in and it:
+
+- **Numbers them** in order — you don't pass \`number\` to each step yourself.
+- **Owns completion state** — each step's starting value comes from its own
+  \`defaultCompleted\` / \`isCompleted\` prop, and toggling a checkbox updates the list.
+- **Shows progress** — a bar derived from how many steps are complete.
+
+## Props
+
+- \`showProgress\` — toggle the progress bar (default \`true\`).
+- \`onProgressChange\` — fires with \`{ completed, total }\` whenever the count
+  changes. Use it to drive your app's own progress UI, persistence, or analytics.`;
+
 const meta = {
   title: "Guide/GuideStepList",
   component: GuideStepList,
   tags: ["autodocs"],
+  parameters: {
+    docs: { description: { component: componentDocs } },
+  },
   args: { children: null },
 } satisfies Meta<typeof GuideStepList>;
 
@@ -15,6 +32,14 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Three steps, auto-numbered, with a progress bar above them. Check a step off to watch the bar update — the list owns that state.",
+      },
+    },
+  },
   render: (args) => (
     <div className="max-w-4xl">
       <GuideStepList {...args}>
@@ -26,7 +51,7 @@ export const Default: Story = {
             />
           </GuideStep.Media>
           <GuideStep.Bullets>
-            <GuideStep.Bullet severity="caution">
+            <GuideStep.Bullet variant="caution">
               Unplug the device and discharge any stored power first.
             </GuideStep.Bullet>
             <GuideStep.Bullet>Remove the four base screws.</GuideStep.Bullet>
@@ -40,7 +65,7 @@ export const Default: Story = {
             />
           </GuideStep.Media>
           <GuideStep.Bullets>
-            <GuideStep.Bullet severity="danger">
+            <GuideStep.Bullet variant="caution">
               Always disconnect the battery before touching the board.
             </GuideStep.Bullet>
           </GuideStep.Bullets>
@@ -54,7 +79,7 @@ export const Default: Story = {
           </GuideStep.Media>
           <GuideStep.Bullets>
             <GuideStep.Bullet>Swap in the new part.</GuideStep.Bullet>
-            <GuideStep.Bullet severity="tip">
+            <GuideStep.Bullet variant="note">
               Reassemble by following these steps in reverse.
             </GuideStep.Bullet>
           </GuideStep.Bullets>
@@ -65,6 +90,14 @@ export const Default: Story = {
 };
 
 export const WithStartingProgress: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Mark a step `defaultCompleted` and the list reflects it in the initial progress — handy when restoring a reader's place from saved state.",
+      },
+    },
+  },
   render: (args) => (
     <div className="max-w-4xl">
       <GuideStepList {...args}>
@@ -88,6 +121,45 @@ export const WithStartingProgress: Story = {
           </GuideStep.Media>
           <GuideStep.Bullets>
             <GuideStep.Bullet>Continue here.</GuideStep.Bullet>
+          </GuideStep.Bullets>
+        </GuideStep>
+      </GuideStepList>
+    </div>
+  ),
+};
+
+export const WithoutProgressBar: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Set `showProgress={false}` to hide the bar while keeping auto-numbering and completion. Pair it with `onProgressChange` to render progress your own way.",
+      },
+    },
+  },
+  render: (args) => (
+    <div className="max-w-4xl">
+      <GuideStepList {...args} showProgress={false}>
+        <GuideStep title="First step">
+          <GuideStep.Media>
+            <MediaFigure
+              src="https://placehold.co/800x600/e2e8f0/1e293b/png?text=Step+1"
+              alt="First step"
+            />
+          </GuideStep.Media>
+          <GuideStep.Bullets>
+            <GuideStep.Bullet>No progress bar is shown here.</GuideStep.Bullet>
+          </GuideStep.Bullets>
+        </GuideStep>
+        <GuideStep title="Second step">
+          <GuideStep.Media>
+            <MediaFigure
+              src="https://placehold.co/800x600/dbeafe/1e40af/png?text=Step+2"
+              alt="Second step"
+            />
+          </GuideStep.Media>
+          <GuideStep.Bullets>
+            <GuideStep.Bullet>Steps are still numbered in order.</GuideStep.Bullet>
           </GuideStep.Bullets>
         </GuideStep>
       </GuideStepList>

@@ -1,8 +1,64 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import LinkTo from "@storybook/addon-links/react";
 import type { ReactNode } from "react";
 import { Callout } from "../components/Callout";
 import { COLORS, type GuideColor } from "../types/colors";
 import { calloutTypeLabel, type CalloutType } from "../types/callout";
+
+const GETTING_STARTED = "Getting Started";
+
+const gettingStartedPages = [
+  { story: "Overview", label: "Overview" },
+  { story: "Installation", label: "Installation" },
+  { story: "Anatomy of a Guide", label: "Anatomy of a Guide" },
+  { story: "Colors & callouts", label: "Colors & callouts" },
+  { story: "WritingGreatGuides", label: "Writing Great Guides" },
+] as const;
+
+const guideComponentLinks = [
+  {
+    kind: "Guide/GuideLayout",
+    story: "FullGuide",
+    name: "GuideLayout",
+    description: "Page shell with header, intro, sidebar, and content regions.",
+  },
+  {
+    kind: "Guide/GuideStepList",
+    story: "Default",
+    name: "GuideStepList",
+    description: "Numbered steps, completion tracking, and a progress bar.",
+  },
+  {
+    kind: "Guide/GuideStep",
+    story: "Anatomy",
+    name: "GuideStep",
+    description: "One step with media, thumbnails, and bulleted instructions.",
+  },
+  {
+    kind: "Guide/MediaFigure",
+    story: "WithPointAnnotations",
+    name: "MediaFigure",
+    description: "Annotated images and video in a fixed 4:3 frame.",
+  },
+  {
+    kind: "Guide/ToolList",
+    story: "Tools",
+    name: "ToolList",
+    description: "Tools and parts lists for the sidebar.",
+  },
+  {
+    kind: "Guide/Callout",
+    story: "AllTypes",
+    name: "Callout",
+    description: "Safety and context callouts by type.",
+  },
+  {
+    kind: "Guide/DifficultyBadge",
+    story: "AllLevels",
+    name: "DifficultyBadge",
+    description: "Easy, moderate, and difficult difficulty pills.",
+  },
+] as const;
 
 /**
  * Narrative documentation for the library. These pages explain what DIY Guides
@@ -94,6 +150,8 @@ const layers = [
         name: "GuideLayout",
         description:
           "The page frame: header, intro, a tools/parts sidebar, and the full-width content column. Start here.",
+        kind: "Guide/GuideLayout",
+        story: "FullGuide",
       },
     ],
   },
@@ -104,16 +162,22 @@ const layers = [
         name: "GuideStepList",
         description:
           "Wraps your steps. Numbers them in order, tracks completion, and shows a progress bar — automatically.",
+        kind: "Guide/GuideStepList",
+        story: "Default",
       },
       {
         name: "GuideStep",
         description:
           "One step: a numbered header, a main image with optional thumbnails, and bulleted instructions beside it.",
+        kind: "Guide/GuideStep",
+        story: "Anatomy",
       },
       {
         name: "MediaFigure",
         description:
           "The image or video for a step, with markers that point at the exact spot to work on.",
+        kind: "Guide/MediaFigure",
+        story: "WithPointAnnotations",
       },
     ],
   },
@@ -124,16 +188,22 @@ const layers = [
         name: "ToolList",
         description:
           "The \u201cwhat you need\u201d card. Use one list for tools and another for parts.",
+        kind: "Guide/ToolList",
+        story: "Tools",
       },
       {
         name: "Callout",
         description:
           "Safety and context callouts, styled by type, for moments that need extra attention.",
+        kind: "Guide/Callout",
+        story: "AllTypes",
       },
       {
         name: "DifficultyBadge",
         description:
           "A small easy / moderate / difficult pill. GuideLayout.Header renders one for you.",
+        kind: "Guide/DifficultyBadge",
+        story: "AllLevels",
       },
     ],
   },
@@ -230,15 +300,129 @@ function InlineCode({ children }: { children: ReactNode }) {
   );
 }
 
+const storyLinkAnchorClass =
+  "[&>a]:font-medium [&>a]:text-accent [&>a]:underline-offset-2 [&>a]:hover:underline [&>a]:focus-visible:outline-none [&>a]:focus-visible:ring-2 [&>a]:focus-visible:ring-accent";
+
+function StoryLink({
+  kind,
+  story,
+  children,
+  className,
+}: {
+  kind: string;
+  story: string;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <span className={className ?? storyLinkAnchorClass}>
+      <LinkTo kind={kind} story={story}>
+        {children}
+      </LinkTo>
+    </span>
+  );
+}
+
+function GettingStartedNav({ current }: { current: (typeof gettingStartedPages)[number]["story"] }) {
+  return (
+    <nav aria-label="Getting Started" className="flex flex-wrap gap-2">
+      {gettingStartedPages.map(({ story, label }) =>
+        story === current ? (
+          <span
+            key={story}
+            aria-current="page"
+            className="rounded-full bg-accent-soft px-3 py-1 text-sm font-medium text-accent"
+          >
+            {label}
+          </span>
+        ) : (
+          <StoryLink
+            key={story}
+            kind={GETTING_STARTED}
+            story={story}
+            className="rounded-full border border-default bg-content1 px-3 py-1 text-sm font-medium transition-colors [&>a]:text-foreground [&>a]:no-underline hover:border-accent hover:bg-accent-soft [&>a]:hover:text-accent"
+          >
+            {label}
+          </StoryLink>
+        ),
+      )}
+    </nav>
+  );
+}
+
+function PageFooter({ current }: { current: (typeof gettingStartedPages)[number]["story"] }) {
+  const index = gettingStartedPages.findIndex((page) => page.story === current);
+  const previous = index > 0 ? gettingStartedPages[index - 1] : null;
+  const next = index < gettingStartedPages.length - 1 ? gettingStartedPages[index + 1] : null;
+
+  if (!previous && !next) return null;
+
+  return (
+    <footer className="flex flex-col gap-3 border-t border-default pt-8 sm:flex-row sm:items-center sm:justify-between">
+      {previous ? (
+        <StoryLink
+          kind={GETTING_STARTED}
+          story={previous.story}
+          className="text-sm [&>a]:text-default-600 [&>a]:no-underline [&>a]:hover:text-accent [&>a]:hover:underline"
+        >
+          ← {previous.label}
+        </StoryLink>
+      ) : (
+        <span />
+      )}
+      {next ? (
+        <StoryLink
+          kind={GETTING_STARTED}
+          story={next.story}
+          className="text-sm sm:text-right [&>a]:text-default-600 [&>a]:no-underline [&>a]:hover:text-accent [&>a]:hover:underline"
+        >
+          {next.label} →
+        </StoryLink>
+      ) : null}
+    </footer>
+  );
+}
+
+function GuideComponentIndex() {
+  return (
+    <section className="flex flex-col gap-4">
+      <h2 className="max-w-3xl text-2xl font-semibold tracking-tight">
+        Explore the components
+      </h2>
+      <p className="max-w-3xl text-base leading-7 text-default-600">
+        Each component has live examples and a props reference under the{" "}
+        <span className="font-medium text-foreground">Guide</span> section.
+      </p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {guideComponentLinks.map(({ kind, story, name, description }) => (
+          <article
+            key={name}
+            className="rounded-lg border border-default bg-content1 p-4 transition-colors hover:border-accent"
+          >
+            <h3 className="font-semibold">
+              <StoryLink kind={kind} story={story}>
+                {name}
+              </StoryLink>
+            </h3>
+            <p className="mt-2 text-sm leading-6 text-default-600">{description}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export const Overview: Story = {
   render: () => (
     <Page>
+      <GettingStartedNav current="Overview" />
+
       <header className="flex max-w-3xl flex-col gap-5">
         <p className="text-sm font-semibold uppercase tracking-wide text-accent">
           DIY Guides UI
         </p>
         <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-          React components for clear, repairable step-by-step guides.
+          React components for clear, step-by-step DIY guides.
         </h1>
         <p className="text-lg leading-8 text-default-600">
           DIY Guides UI gives repair and maker projects the UI pieces to teach a
@@ -278,33 +462,39 @@ export const Overview: Story = {
         <p>Work through this section top to bottom:</p>
         <ol className="mt-4 list-decimal space-y-2 pl-5">
           <li>
-            <span className="font-medium text-foreground">Installation</span> —
-            add the package and load its styles.
+            <StoryLink kind={GETTING_STARTED} story="Installation">
+              Installation
+            </StoryLink>{" "}
+            — add the package and load its styles.
           </li>
           <li>
-            <span className="font-medium text-foreground">
+            <StoryLink kind={GETTING_STARTED} story="Anatomy of a Guide">
               Anatomy of a Guide
-            </span>{" "}
+            </StoryLink>{" "}
             — see how the components nest into a full page.
           </li>
           <li>
-            <span className="font-medium text-foreground">
+            <StoryLink kind={GETTING_STARTED} story="Colors & callouts">
               Colors &amp; callouts
-            </span>{" "}
+            </StoryLink>{" "}
             — guide colors for linking bullets to images, and callout types for
             safety tone.
           </li>
           <li>
-            <span className="font-medium text-foreground">
+            <StoryLink kind={GETTING_STARTED} story="WritingGreatGuides">
               Writing Great Guides
-            </span>{" "}
+            </StoryLink>{" "}
             — practical advice for clear, trustworthy steps.
           </li>
         </ol>
         <p className="mt-4">
           Then explore each component under the{" "}
           <span className="font-medium text-foreground">Guide</span> section for
-          live examples and a full props reference.
+          live examples and a full props reference — or jump straight to the{" "}
+          <StoryLink kind="Guide/GuideLayout" story="FullGuide">
+            full guide example
+          </StoryLink>
+          .
         </p>
       </Section>
 
@@ -318,6 +508,9 @@ export const Overview: Story = {
           these components.
         </p>
       </Section>
+
+      <GuideComponentIndex />
+      <PageFooter current="Overview" />
     </Page>
   ),
 };
@@ -325,6 +518,8 @@ export const Overview: Story = {
 export const Installation: Story = {
   render: () => (
     <Page>
+      <GettingStartedNav current="Installation" />
+
       <PageHeader eyebrow="Installation" title="Add the library to a React app.">
         The package ships components, TypeScript types, and bundled styles. React
         and React DOM are peer dependencies, so your app provides them.
@@ -354,7 +549,20 @@ export const Installation: Story = {
 
       <Section title="3. Import the components you need">
         <CodeBlock>{importsExample}</CodeBlock>
+        <p className="mt-4">
+          Next, see how those pieces fit together in{" "}
+          <StoryLink kind={GETTING_STARTED} story="Anatomy of a Guide">
+            Anatomy of a Guide
+          </StoryLink>
+          , or open the{" "}
+          <StoryLink kind="Guide/GuideLayout" story="FullGuide">
+            full guide example
+          </StoryLink>
+          .
+        </p>
       </Section>
+
+      <PageFooter current="Installation" />
     </Page>
   ),
 };
@@ -363,6 +571,8 @@ export const AnatomyOfAGuide: Story = {
   name: "Anatomy of a Guide",
   render: () => (
     <Page>
+      <GettingStartedNav current="Anatomy of a Guide" />
+
       <PageHeader eyebrow="Anatomy" title="A guide is built from readable parts.">
         The API mirrors the finished page, so a guide reads like an outline:
         title, context, what you need, warnings, then the steps. Here is a
@@ -382,9 +592,13 @@ export const AnatomyOfAGuide: Story = {
                 {layer.items.map((item) => (
                   <article
                     key={item.name}
-                    className="rounded-lg border border-default bg-content1 p-4"
+                    className="rounded-lg border border-default bg-content1 p-4 transition-colors hover:border-accent"
                   >
-                    <h4 className="font-semibold">{item.name}</h4>
+                    <h4 className="font-semibold">
+                      <StoryLink kind={item.kind} story={item.story}>
+                        {item.name}
+                      </StoryLink>
+                    </h4>
                     <p className="mt-2 text-sm leading-6 text-default-600">
                       {item.description}
                     </p>
@@ -395,6 +609,20 @@ export const AnatomyOfAGuide: Story = {
           ))}
         </div>
       </Section>
+
+      <p className="max-w-3xl text-base leading-7 text-default-600">
+        See the pieces working together in{" "}
+        <StoryLink kind="Guide/GuideLayout" story="FullGuide">
+          GuideLayout → Full guide
+        </StoryLink>
+        . For color linking and safety tone, continue to{" "}
+        <StoryLink kind={GETTING_STARTED} story="Colors & callouts">
+          Colors &amp; callouts
+        </StoryLink>
+        .
+      </p>
+
+      <PageFooter current="Anatomy of a Guide" />
     </Page>
   ),
 };
@@ -403,6 +631,8 @@ export const ColorsAndCallouts: Story = {
   name: "Colors & callouts",
   render: () => (
     <Page>
+      <GettingStartedNav current="Colors & callouts" />
+
       <PageHeader
         eyebrow="Shared language"
         title="Two systems: colors for linking, types for tone."
@@ -416,9 +646,14 @@ export const ColorsAndCallouts: Story = {
       <Section title="Guide colors">
         <p>
           Use a <InlineCode>color</InlineCode> on both a{" "}
-          <InlineCode>MediaFigure</InlineCode> annotation and its matching{" "}
-          <InlineCode>GuideStep.Bullet</InlineCode> so the reader connects the
-          instruction to the spot on the photo. Pick any name from the palette —
+          <StoryLink kind="Guide/MediaFigure" story="WithPointAnnotations">
+            MediaFigure
+          </StoryLink>{" "}
+          annotation and its matching{" "}
+          <StoryLink kind="Guide/GuideStep" story="Dot bullets">
+            GuideStep.Bullet
+          </StoryLink>{" "}
+          so the reader connects the instruction to the spot on the photo. Pick any name from the palette —
           the color is a label, not a warning level.
         </p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -448,8 +683,10 @@ export const ColorsAndCallouts: Story = {
 
       <Section title="Callout types">
         <p>
-          <InlineCode>Callout</InlineCode> uses a <InlineCode>type</InlineCode>{" "}
-          prop for safety and informational tone. Each type maps to a palette
+          <StoryLink kind="Guide/Callout" story="AllTypes">
+            Callout
+          </StoryLink>{" "}
+          uses a <InlineCode>type</InlineCode> prop for safety and informational tone. Each type maps to a palette
           accent color and default title.
         </p>
         <div className="mt-4 flex flex-col gap-4">
@@ -482,9 +719,15 @@ export const ColorsAndCallouts: Story = {
           For inline warnings inside a step, use semantic bullet variants —{" "}
           <InlineCode>variant="caution"</InlineCode>,{" "}
           <InlineCode>variant="reminder"</InlineCode>, or{" "}
-          <InlineCode>variant="note"</InlineCode> — instead of a colored dot.
+          <InlineCode>variant="note"</InlineCode> — instead of a colored dot. See{" "}
+          <StoryLink kind="Guide/GuideStep" story="Semantic bullets">
+            GuideStep → Semantic bullets
+          </StoryLink>
+          .
         </p>
       </Section>
+
+      <PageFooter current="Colors & callouts" />
     </Page>
   ),
 };
@@ -492,6 +735,8 @@ export const ColorsAndCallouts: Story = {
 export const WritingGreatGuides: Story = {
   render: () => (
     <Page>
+      <GettingStartedNav current="WritingGreatGuides" />
+
       <PageHeader
         eyebrow="Authoring"
         title="Make each step easy to trust and easy to follow."
@@ -523,12 +768,20 @@ export const WritingGreatGuides: Story = {
           </li>
           <li>
             Use point markers for precise spots, circles for areas, and
-            rectangles for zones such as a row of clips or an adhesive strip.
+            rectangles for zones such as a row of clips or an adhesive strip — see{" "}
+            <StoryLink kind="Guide/MediaFigure" story="WithShapeAnnotations">
+              MediaFigure → Shape annotations
+            </StoryLink>
+            .
           </li>
           <li>
             Match a marker&apos;s <InlineCode>color</InlineCode> to its bullet
             so the reader can connect the instruction to the exact place on the
-            photo.
+            photo — see{" "}
+            <StoryLink kind="Guide/GuideStep" story="Dot bullets">
+              GuideStep → Dot bullets
+            </StoryLink>
+            .
           </li>
         </ul>
       </Section>
@@ -542,14 +795,25 @@ export const WritingGreatGuides: Story = {
           <li>
             Reserve <InlineCode>type="danger"</InlineCode> on callouts for
             genuine hazards; use <InlineCode>type="caution"</InlineCode> for
-            ordinary care.
+            ordinary care — compare types in{" "}
+            <StoryLink kind="Guide/Callout" story="AllTypes">
+              Callout → All types
+            </StoryLink>
+            .
           </li>
           <li>
             Keep tool and part names specific enough that a reader can gather
-            everything before they start.
+            everything before they start — model lists in{" "}
+            <StoryLink kind="Guide/ToolList" story="Tools">
+              ToolList
+            </StoryLink>
+            .
           </li>
         </ul>
       </Section>
+
+      <GuideComponentIndex />
+      <PageFooter current="WritingGreatGuides" />
     </Page>
   ),
 };

@@ -9,7 +9,7 @@ import {
   type ReactElement,
   type ReactNode,
 } from "react";
-import { ProgressBar, cn } from "@heroui/react";
+import { Card, ProgressBar, cn } from "@heroui/react";
 import type { GuideStepProps } from "../GuideStep";
 
 export interface GuideProgress {
@@ -66,22 +66,26 @@ export function GuideStepList({
   return (
     <div className={cn("flex flex-col gap-8", className)}>
       {showProgress && total > 0 && (
-        <ProgressBar
-          value={completedCount}
-          maxValue={total}
-          aria-label="Guide progress"
-          className="flex flex-col gap-1.5"
-        >
-          <div className="flex items-center justify-between text-sm text-default-500">
-            <span>Progress</span>
-            <ProgressBar.Output>
-              {completedCount} / {total} steps
-            </ProgressBar.Output>
-          </div>
-          <ProgressBar.Track className="h-2 overflow-hidden rounded-full bg-default-soft">
-            <ProgressBar.Fill className="h-full rounded-full bg-success transition-[width]" />
-          </ProgressBar.Track>
-        </ProgressBar>
+        <div className="sticky top-0 z-10">
+          <Card className="w-full px-6 py-4">
+            <ProgressBar
+              value={completedCount}
+              maxValue={total}
+              aria-label="Guide progress"
+              className="flex flex-col gap-1.5"
+            >
+              <div className="flex items-center justify-between text-sm text-default-500">
+                <span>Guide Progress</span>
+                <ProgressBar.Output>
+                  {completedCount} / {total} steps
+                </ProgressBar.Output>
+              </div>
+              <ProgressBar.Track className="h-2 overflow-hidden rounded-full bg-default-soft">
+                <ProgressBar.Fill className="h-full rounded-full bg-success transition-[width]" />
+              </ProgressBar.Track>
+            </ProgressBar>
+          </Card>
+        </div>
       )}
 
       <ol className="flex flex-col gap-8">

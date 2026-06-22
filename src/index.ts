@@ -24,6 +24,9 @@ export { MediaFigure } from "./components/MediaFigure";
 export type {
   MediaFigureProps,
   MediaAnnotation,
+  PointAnnotation,
+  CircleAnnotation,
+  RectangleAnnotation,
 } from "./components/MediaFigure";
 
 export { ToolList } from "./components/ToolList";

@@ -166,7 +166,7 @@ The `Guide/*` set is implemented under `src/components/` and exported from `src/
 
 - **DifficultyBadge** — `<DifficultyBadge difficulty="moderate" />`. Color-coded pill (easy → green, moderate → amber, difficult → red) with an optional gauge icon.
 - **WarningCallout** — `<WarningCallout severity="danger" title="…">…</WarningCallout>`. Wraps HeroUI `Alert`; `severity` drives status, default icon, and default title.
-- **MediaFigure** — `<MediaFigure src alt caption annotations={[{ x, y, severity, label }]} />`. Image/video with caption and percentage-positioned markers (colors come from severity).
+- **MediaFigure** — `<MediaFigure src alt caption annotations={[…]} />`. Image/video with caption and percentage-positioned overlays. Annotation types: `point` (`x`, `y`, optional `label`), `circle` (`x`, `y`, `radius`), `rectangle` (`x1`, `y1`, `x2`, `y2`). Only `point` markers show a label; all types accept `severity` and `title`.
 - **ToolList** + **ToolList.Item** — titled card listing tools/parts (`name`, `thumbnail`, `href`, `quantity`, `price`).
 - **GuideStep** + **GuideStep.Media** / **GuideStep.Bullets** / **GuideStep.Bullet** — a numbered step with a two-column body (main image left; hover thumbnails + bullets right). Up to **three** `MediaFigure`s in `.Media` share a thumbnail gallery — hover/focus a thumb to swap the main image. Stacks on viewports below `sm`. Completion is controllable (`isCompleted` / `onCompletedChange`) or uncontrolled (`defaultCompleted`).
 - **GuideStepList** — wraps `GuideStep`s; auto-numbers them, owns their completion state, and renders a derived progress bar. Listen via `onProgressChange`.

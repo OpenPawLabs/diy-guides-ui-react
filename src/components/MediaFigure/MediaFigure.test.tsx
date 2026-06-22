@@ -11,15 +11,65 @@ describe("MediaFigure", () => {
     expect(screen.getByText("Step photo")).toBeInTheDocument();
   });
 
-  it("renders a labeled annotation marker", () => {
+  it("renders a labeled point annotation marker", () => {
     render(
       <MediaFigure
         src="/photo.jpg"
         alt="Board overview"
-        annotations={[{ x: 50, y: 50, label: 1, title: "Connector" }]}
+        annotations={[{ type: "point", x: 50, y: 50, label: 1, title: "Connector" }]}
       />,
     );
     expect(screen.getByRole("img", { name: "Connector" })).toHaveTextContent("1");
+  });
+
+  it("defaults omitted type to point", () => {
+    render(
+      <MediaFigure
+        src="/photo.jpg"
+        alt="Board overview"
+        annotations={[{ x: 50, y: 50, label: "A", title: "Screw" }]}
+      />,
+    );
+    expect(screen.getByRole("img", { name: "Screw" })).toHaveTextContent("A");
+  });
+
+  it("renders a circle annotation", () => {
+    render(
+      <MediaFigure
+        src="/photo.jpg"
+        alt="Board overview"
+        annotations={[{ type: "circle", x: 40, y: 60, radius: 12, title: "Heat zone" }]}
+      />,
+    );
+    const marker = screen.getByRole("img", { name: "Heat zone" });
+    expect(marker).toHaveClass("rounded-full");
+    expect(marker).toHaveStyle({ left: "40%", top: "60%", width: "24%" });
+  });
+
+  it("renders a rectangle annotation from opposite corners", () => {
+    render(
+      <MediaFigure
+        src="/photo.jpg"
+        alt="Board overview"
+        annotations={[
+          {
+            type: "rectangle",
+            x1: 20,
+            y1: 30,
+            x2: 55,
+            y2: 70,
+            title: "Clip area",
+          },
+        ]}
+      />,
+    );
+    const marker = screen.getByRole("img", { name: "Clip area" });
+    expect(marker).toHaveStyle({
+      left: "20%",
+      top: "30%",
+      width: "35%",
+      height: "40%",
+    });
   });
 
   it("renders a video element when type is video", () => {

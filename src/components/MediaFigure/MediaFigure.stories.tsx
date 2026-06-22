@@ -25,15 +25,53 @@ export const Default: Story = {
   ),
 };
 
-export const WithAnnotations: Story = {
+export const WithPointAnnotations: Story = {
   render: (args) => (
     <div className="max-w-md">
       <MediaFigure
         {...args}
         annotations={[
-          { x: 28, y: 35, severity: "note", label: 1, title: "Pry point" },
-          { x: 64, y: 52, severity: "caution", label: 2, title: "Hidden clip" },
-          { x: 45, y: 78, severity: "danger", label: 3, title: "Battery cable" },
+          { type: "point", x: 28, y: 35, severity: "note", label: 1, title: "Pry point" },
+          { type: "point", x: 64, y: 52, severity: "caution", label: 2, title: "Hidden clip" },
+          { type: "point", x: 45, y: 78, severity: "danger", label: 3, title: "Battery cable" },
+        ]}
+      />
+    </div>
+  ),
+};
+
+export const WithShapeAnnotations: Story = {
+  render: (args) => (
+    <div className="max-w-md">
+      <MediaFigure
+        {...args}
+        caption="Circle highlights the heating area; rectangle marks the clip zone."
+        annotations={[
+          {
+            type: "circle",
+            x: 35,
+            y: 42,
+            radius: 14,
+            severity: "caution",
+            title: "Heat this area evenly",
+          },
+          {
+            type: "rectangle",
+            x1: 58,
+            y1: 28,
+            x2: 82,
+            y2: 62,
+            severity: "info",
+            title: "Plastic clip location",
+          },
+          {
+            type: "point",
+            x: 72,
+            y: 78,
+            severity: "tip",
+            label: 1,
+            title: "Insert pry tool here",
+          },
         ]}
       />
     </div>

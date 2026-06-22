@@ -55,8 +55,10 @@ describe("GuideStepList", () => {
     );
     expect(screen.getByText("0 / 2 steps")).toBeInTheDocument();
 
-    const [firstCheckbox] = screen.getAllByRole("checkbox");
-    await user.click(firstCheckbox);
+    const [firstMarkComplete] = screen.getAllByRole("button", {
+      name: /mark complete/i,
+    });
+    await user.click(firstMarkComplete);
 
     expect(screen.getByText("1 / 2 steps")).toBeInTheDocument();
     expect(onProgressChange).toHaveBeenLastCalledWith({ completed: 1, total: 2 });

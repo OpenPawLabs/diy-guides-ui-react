@@ -66,7 +66,7 @@ export function GuideStepList({
   return (
     <div className={cn("flex flex-col gap-8", className)}>
       {showProgress && total > 0 && (
-        <div className="sticky top-0 z-10">
+        <div className="sticky top-2 mx-2 z-10">
           <Card className="w-full px-6 py-4">
             <ProgressBar
               value={completedCount}

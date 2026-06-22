@@ -28,7 +28,7 @@ describe("GuideStep", () => {
     expect(screen.getByText("Undo the four corner screws.")).toBeInTheDocument();
   });
 
-  it("toggles uncontrolled completion via the checkbox", async () => {
+  it("toggles completion when clicking the checkbox control inside the button", async () => {
     const user = userEvent.setup();
     const onCompletedChange = vi.fn();
     render(
@@ -41,11 +41,32 @@ describe("GuideStep", () => {
         </GuideStep.Bullets>
       </GuideStep>,
     );
-    const checkbox = screen.getByRole("checkbox", { name: /mark complete/i });
-    expect(checkbox).not.toBeChecked();
-    await user.click(checkbox);
+    const markComplete = screen.getByRole("button", { name: /mark complete/i });
+    const control = markComplete.querySelector('[data-slot="checkbox-control"]');
+    expect(control).not.toBeNull();
+    await user.click(control!);
     expect(onCompletedChange).toHaveBeenCalledWith(true);
-    expect(checkbox).toBeChecked();
+    expect(markComplete).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("toggles uncontrolled completion via the mark-complete control", async () => {
+    const user = userEvent.setup();
+    const onCompletedChange = vi.fn();
+    render(
+      <GuideStep number={1} title="Step" onCompletedChange={onCompletedChange}>
+        <GuideStep.Media>
+          <MediaFigure {...stepPhoto} />
+        </GuideStep.Media>
+        <GuideStep.Bullets>
+          <GuideStep.Bullet>Instruction.</GuideStep.Bullet>
+        </GuideStep.Bullets>
+      </GuideStep>,
+    );
+    const markComplete = screen.getByRole("button", { name: /mark complete/i });
+    expect(markComplete).toHaveAttribute("aria-pressed", "false");
+    await user.click(markComplete);
+    expect(onCompletedChange).toHaveBeenCalledWith(true);
+    expect(markComplete).toHaveAttribute("aria-pressed", "true");
   });
 
   it("respects controlled completion state", () => {
@@ -59,7 +80,10 @@ describe("GuideStep", () => {
         </GuideStep.Bullets>
       </GuideStep>,
     );
-    expect(screen.getByRole("checkbox")).not.toBeChecked();
+    expect(screen.getByRole("button", { name: /mark complete/i })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
     rerender(
       <GuideStep number={1} title="Step" isCompleted>
         <GuideStep.Media>
@@ -70,10 +94,13 @@ describe("GuideStep", () => {
         </GuideStep.Bullets>
       </GuideStep>,
     );
-    expect(screen.getByRole("checkbox")).toBeChecked();
+    expect(screen.getByRole("button", { name: /mark complete/i })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
   });
 
-  it("hides the completion checkbox when completable is false", () => {
+  it("hides the completion control when completable is false", () => {
     render(
       <GuideStep number={1} title="Step" completable={false}>
         <GuideStep.Media>
@@ -84,7 +111,9 @@ describe("GuideStep", () => {
         </GuideStep.Bullets>
       </GuideStep>,
     );
-    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /mark complete/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("warns in development when media or bullets are missing", () => {

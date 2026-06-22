@@ -9,3 +9,31 @@
   --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     sans-serif;
 }
+
+/* GuideStep completed toggle — overrides HeroUI button/checkbox token defaults */
+@layer components {
+  .guide-step-complete-button {
+    --button-bg: var(--guide-step-complete-bg);
+    --button-bg-hover: var(--guide-step-complete-bg-hover);
+    --button-bg-pressed: var(--guide-step-complete-bg-hover);
+    --button-fg: #ffffff;
+    color: #ffffff;
+
+    .checkbox__content {
+      color: #ffffff;
+    }
+
+    .checkbox[data-selected="true"] .checkbox__control {
+      border-color: transparent;
+      color: #ffffff;
+    }
+
+    .checkbox[data-selected="true"] .checkbox__control::before {
+      background-color: var(--guide-step-complete-checkbox);
+    }
+
+    [data-slot="checkbox-default-indicator--checkmark"] {
+      color: #ffffff;
+    }
+  }
+}

@@ -6,16 +6,23 @@ import {
   isValidElement,
   useId,
   useState,
+  type CSSProperties,
   type ReactElement,
   type ReactNode,
 } from "react";
-import { Checkbox, cn } from "@heroui/react";
+import { Button, Checkbox, cn } from "@heroui/react";
 import { useControlledState } from "../../hooks/useControlledState";
 import { calloutTypeLabel } from "../../types/callout";
 import { COLORS, type GuideColor } from "../../types/colors";
 import { MediaFigure, type MediaFigureProps } from "../MediaFigure";
 
 const MAX_STEP_IMAGES = 3;
+
+/** Completed mark-complete button — softer than `COLORS.GREEN`, still readable with white text. */
+const COMPLETE_BUTTON_BG = "#3ABF84";
+const COMPLETE_BUTTON_BG_HOVER = "#34B07A";
+/** Dark green accent for the checkbox control when a step is marked complete. */
+const COMPLETE_CHECKBOX_GREEN = "#0B7A47";
 
 export interface GuideStepProps {
   /** Step number shown in the badge. Auto-assigned when inside `GuideStepList`. */
@@ -361,21 +368,47 @@ function GuideStepRoot({
           </span>
         )}
         {title != null && (
-          <h3 id={titleId} className="flex-1 text-lg font-semibold">
+          <h3
+            id={titleId}
+            className="min-w-0 flex-1 text-lg font-semibold leading-tight"
+          >
             {title}
           </h3>
         )}
         {completable && (
-          <Checkbox
-            isSelected={completed}
-            onChange={setCompleted}
-            className="ml-auto shrink-0 text-sm text-default-500"
+          <Button
+            variant={completed ? "primary" : "secondary"}
+            size="lg"
+            onPress={() => setCompleted(!completed)}
+            aria-pressed={completed}
+            className={cn(
+              "ml-auto shrink-0",
+              completed && "guide-step-complete-button",
+            )}
+            style={
+              completed
+                ? ({
+                    "--guide-step-complete-bg": COMPLETE_BUTTON_BG,
+                    "--guide-step-complete-bg-hover": COMPLETE_BUTTON_BG_HOVER,
+                    "--guide-step-complete-checkbox": COMPLETE_CHECKBOX_GREEN,
+                  } as CSSProperties)
+                : undefined
+            }
           >
-            <Checkbox.Control>
-              <Checkbox.Indicator />
-            </Checkbox.Control>
-            <Checkbox.Content>Mark complete</Checkbox.Content>
-          </Checkbox>
+            <Checkbox
+              isSelected={completed}
+              isReadOnly
+              aria-hidden
+              className="pointer-events-none gap-2 text-inherit"
+            >
+              <Checkbox.Content className="flex items-center gap-2 whitespace-nowrap">
+                <Checkbox.Control>
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                Mark complete
+              </Checkbox.Content>
+            </Checkbox>
+          </Button>
         )}
       </header>
 

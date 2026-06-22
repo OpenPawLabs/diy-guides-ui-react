@@ -354,27 +354,29 @@ function GuideStepRoot({
         className,
       )}
     >
-      <header className="flex items-center gap-3">
-        {number != null && (
-          <span
-            className={cn(
-              "flex size-8 shrink-0 items-center justify-center rounded-md text-sm font-bold tabular-nums",
-              completed
-                ? "bg-success text-success-foreground"
-                : "bg-foreground text-background",
-            )}
-          >
-            {completed ? <StepCheck /> : number}
-          </span>
-        )}
-        {title != null && (
-          <h3
-            id={titleId}
-            className="min-w-0 flex-1 text-lg font-semibold leading-tight"
-          >
-            {title}
-          </h3>
-        )}
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="flex min-w-0 items-center gap-3 sm:flex-1">
+          {number != null && (
+            <span
+              className={cn(
+                "flex size-8 shrink-0 items-center justify-center rounded-md text-sm font-bold tabular-nums",
+                completed
+                  ? "bg-success text-success-foreground"
+                  : "bg-foreground text-background",
+              )}
+            >
+              {completed ? <StepCheck /> : number}
+            </span>
+          )}
+          {title != null && (
+            <h3
+              id={titleId}
+              className="min-w-0 flex-1 text-lg font-semibold leading-tight"
+            >
+              {title}
+            </h3>
+          )}
+        </div>
         {completable && (
           <Button
             variant={completed ? "primary" : "secondary"}

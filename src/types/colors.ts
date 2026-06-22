@@ -3,11 +3,11 @@
  * Each name maps to a hex value applied directly via inline styles.
  */
 export const COLORS = {
-  GREY: "#41454E",
+  GREY: "#7A8090",
   RED: "#E7320D",
   ORANGE: "#FF850A",
   YELLOW: "#F5E429",
-  GREEN: "#20E98B",
+  GREEN: "#14CC76",
   LIGHT_BLUE: "#20B3E9",
   BLUE: "#1738DE",
   MAGENTA: "#D945B1",

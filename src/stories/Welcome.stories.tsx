@@ -450,8 +450,8 @@ export const ColorsAndCallouts: Story = {
       <Section title="Callout types">
         <p>
           <InlineCode>Callout</InlineCode> uses a <InlineCode>type</InlineCode>{" "}
-          prop for safety and informational tone. These five levels map to
-          HeroUI alert colors and default titles.
+          prop for safety and informational tone. Each type maps to a palette
+          accent color and default title.
         </p>
         <div className="mt-4 flex flex-col gap-4">
           {calloutTypes.map(({ type, usedFor, example }) => (

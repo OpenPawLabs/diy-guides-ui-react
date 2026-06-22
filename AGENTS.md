@@ -165,20 +165,20 @@ The `Guide/*` set is implemented under `src/components/` and exported from `src/
 
 ### Callout types
 
-`src/types/callout.ts` defines `CalloutType` (`note · info · tip · caution · danger`) and maps it onto HeroUI semantic colors for the `Callout` component.
+`src/types/callout.ts` defines `CalloutType` (`note · info · tip · caution · danger`) and maps each type to a `GuideColor` accent from the shared palette for the `Callout` component.
 
-| Type | HeroUI color | Typical use |
-|----------|--------------|-------------|
-| `note` | default | neutral detail |
-| `info` | accent | reversible / informational |
-| `tip` | success | helpful suggestion, reassembly |
-| `caution` | warning | minor hazard |
-| `danger` | danger | serious hazard |
+| Type | Guide color | Typical use |
+|----------|-------------|-------------|
+| `note` | `GREY` | neutral detail |
+| `info` | `LIGHT_BLUE` | reversible / informational |
+| `tip` | `GREEN` | helpful suggestion, reassembly |
+| `caution` | `ORANGE` | minor hazard |
+| `danger` | `RED` | serious hazard |
 
 ### Components
 
-- **DifficultyBadge** — `<DifficultyBadge difficulty="moderate" />`. Color-coded pill (easy → green, moderate → amber, difficult → red) with an optional gauge icon.
-- **Callout** — `<Callout type="danger" title="…">…</Callout>`. Wraps HeroUI `Alert`; `type` drives status, default icon, and default title.
+- **DifficultyBadge** — `<DifficultyBadge difficulty="moderate" />`. Color-coded pill (`GREEN` / `ORANGE` / `RED` from the guide palette) with an optional gauge icon.
+- **Callout** — `<Callout type="danger" title="…">…</Callout>`. Wraps HeroUI `Alert`; `type` drives palette accent, default icon, and default title.
 - **MediaFigure** — `<MediaFigure src alt caption annotations={[…]} />`. Image/video with caption and percentage-positioned overlays. Annotation types: `point` (`x`, `y`, optional `label`), `circle` (`x`, `y`, `radius`), `rectangle` (`x1`, `y1`, `x2`, `y2`). Only `point` markers show a label; all types accept `color` and `title`.
 - **ToolList** + **ToolList.Item** — titled card listing tools/parts (`name`, `thumbnail`, `href`, `quantity`, `price`).
 - **GuideStep** + **GuideStep.Media** / **GuideStep.Bullets** / **GuideStep.Bullet** — a numbered step with a two-column body (main image left; hover thumbnails + bullets right). Bullets use `variant="dot"` with a `color` to link to image markers, or semantic variants (`caution`, `reminder`, `note`) for inline warnings and notes. Up to **three** `MediaFigure`s in `.Media` share a thumbnail gallery — hover/focus a thumb to swap the main image. Stacks on viewports below `sm`. Completion is controllable (`isCompleted` / `onCompletedChange`) or uncontrolled (`defaultCompleted`).

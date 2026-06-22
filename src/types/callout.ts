@@ -1,26 +1,24 @@
+import { COLORS, type GuideColor } from "./colors";
+
 /**
  * Callout types express safety and informational tone for {@link Callout}.
- * They map onto HeroUI semantic colors — separate from {@link GuideColor},
- * which links step bullets to image annotation markers.
+ * Each type maps to a {@link GuideColor} accent from the shared palette.
  */
 export type CalloutType = "note" | "info" | "tip" | "caution" | "danger";
 
-/** HeroUI semantic color names shared by `Alert` status and `Chip` color. */
-export type HeroSemanticColor =
-  | "default"
-  | "accent"
-  | "success"
-  | "warning"
-  | "danger";
-
-/** Callout type → HeroUI semantic color (drives `Alert.status`, `Chip.color`, …). */
-export const calloutTypeColor: Record<CalloutType, HeroSemanticColor> = {
-  note: "default",
-  info: "accent",
-  tip: "success",
-  caution: "warning",
-  danger: "danger",
+/** Callout type → guide palette accent (drives border, background tint, and icon). */
+export const calloutTypeColor: Record<CalloutType, GuideColor> = {
+  note: "GREY",
+  info: "LIGHT_BLUE",
+  tip: "GREEN",
+  caution: "ORANGE",
+  danger: "RED",
 };
+
+/** Resolved hex accent for a callout type. */
+export function calloutTypeHex(type: CalloutType): string {
+  return COLORS[calloutTypeColor[type]];
+}
 
 /** Callout type → default human-readable title. */
 export const calloutTypeLabel: Record<CalloutType, string> = {

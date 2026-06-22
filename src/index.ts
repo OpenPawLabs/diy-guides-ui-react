@@ -4,8 +4,8 @@ import "./styles/index.css";
 export { COLORS, hexToRgba, markerTextColor, type GuideColor } from "./types/colors";
 export {
   type CalloutType,
-  type HeroSemanticColor,
   calloutTypeColor,
+  calloutTypeHex,
   calloutTypeLabel,
 } from "./types/callout";
 

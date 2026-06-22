@@ -6,9 +6,9 @@ const componentDocs = `A compact, color-coded pill that signals how hard a guide
 
 | Difficulty | Color | Meaning |
 | --- | --- | --- |
-| \`easy\` | green | Minimal tools or risk; fine for first-timers |
-| \`moderate\` | amber | Some disassembly, care, or specific tools needed |
-| \`difficult\` | red | Significant skill, special tools, or higher risk |
+| \`easy\` | \`GREEN\` | Minimal tools or risk; fine for first-timers |
+| \`moderate\` | \`ORANGE\` | Some disassembly, care, or specific tools needed |
+| \`difficult\` | \`RED\` | Significant skill, special tools, or higher risk |
 
 \`GuideLayout.Header\` renders this automatically from its \`difficulty\` prop, so
 you usually only use \`DifficultyBadge\` directly in custom layouts.

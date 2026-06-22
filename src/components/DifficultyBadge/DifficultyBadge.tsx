@@ -1,14 +1,14 @@
 import type { ReactNode } from "react";
-import { Chip } from "@heroui/react";
-import type { HeroSemanticColor } from "../../types/callout";
+import { Chip, cn } from "@heroui/react";
+import { COLORS, hexToRgba, type GuideColor } from "../../types/colors";
 
 /** Relative effort required to complete a guide. */
 export type Difficulty = "easy" | "moderate" | "difficult";
 
-const difficultyColor: Record<Difficulty, HeroSemanticColor> = {
-  easy: "success",
-  moderate: "warning",
-  difficult: "danger",
+const difficultyColor: Record<Difficulty, GuideColor> = {
+  easy: "GREEN",
+  moderate: "ORANGE",
+  difficult: "RED",
 };
 
 const difficultyLabel: Record<Difficulty, string> = {
@@ -50,7 +50,7 @@ function GaugeIcon() {
 
 /**
  * Compact, color-coded indicator of how hard a guide is, built on HeroUI `Chip`.
- * Mirrors iFixit's difficulty pill (easy → green, moderate → amber, difficult → red).
+ * Mirrors iFixit's difficulty pill (easy → green, moderate → orange, difficult → red).
  */
 export function DifficultyBadge({
   difficulty,
@@ -59,12 +59,17 @@ export function DifficultyBadge({
   size = "md",
   className,
 }: DifficultyBadgeProps) {
+  const accent = COLORS[difficultyColor[difficulty]];
+
   return (
     <Chip
-      color={difficultyColor[difficulty]}
       variant="soft"
       size={size}
-      className={className}
+      className={cn(className)}
+      style={{
+        backgroundColor: hexToRgba(accent, 0.15),
+        color: accent,
+      }}
     >
       {showIcon && <GaugeIcon />}
       <Chip.Label>{label ?? difficultyLabel[difficulty]}</Chip.Label>

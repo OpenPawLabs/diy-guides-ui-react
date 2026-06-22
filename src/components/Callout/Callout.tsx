@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
-import { Alert } from "@heroui/react";
+import { Alert, cn } from "@heroui/react";
 import {
   type CalloutType,
-  calloutTypeColor,
+  calloutTypeHex,
   calloutTypeLabel,
 } from "../../types/callout";
+import { hexToRgba } from "../../types/colors";
 
 export interface CalloutProps {
   /** Tone of the callout — controls color, default icon, and default title. @default "caution" */
@@ -63,8 +64,9 @@ function CalloutTypeIcon({ type }: { type: CalloutType }) {
 
 /**
  * Safety / informational callout for guides — battery, heat, ESD, and other
- * hazards. Wraps HeroUI `Alert`, mapping {@link CalloutType} to the matching
- * status, default icon, and title so a single `type` prop styles the whole box.
+ * hazards. Wraps HeroUI `Alert`, mapping {@link CalloutType} to a guide
+ * palette accent, default icon, and title so a single `type` prop styles the
+ * whole box.
  */
 export function Callout({
   type = "caution",
@@ -74,10 +76,19 @@ export function Callout({
   className,
 }: CalloutProps) {
   const resolvedTitle = title === undefined ? calloutTypeLabel[type] : title;
+  const accent = calloutTypeHex(type);
 
   return (
-    <Alert status={calloutTypeColor[type]} className={className}>
-      <Alert.Indicator>{icon ?? <CalloutTypeIcon type={type} />}</Alert.Indicator>
+    <Alert
+      className={cn("border", className)}
+      style={{
+        backgroundColor: hexToRgba(accent, 0.1),
+        borderColor: accent,
+      }}
+    >
+      <Alert.Indicator style={{ color: accent }}>
+        {icon ?? <CalloutTypeIcon type={type} />}
+      </Alert.Indicator>
       <Alert.Content>
         {resolvedTitle != null && <Alert.Title>{resolvedTitle}</Alert.Title>}
         <Alert.Description>{children}</Alert.Description>

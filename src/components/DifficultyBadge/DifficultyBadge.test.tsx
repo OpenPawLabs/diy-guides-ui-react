@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import { COLORS, hexToRgba } from "../../types/colors";
 import { DifficultyBadge } from "./DifficultyBadge";
 
 describe("DifficultyBadge", () => {
@@ -19,5 +20,14 @@ describe("DifficultyBadge", () => {
       <DifficultyBadge difficulty="easy" showIcon={false} />,
     );
     expect(container.querySelector("svg")).toBeNull();
+  });
+
+  it("applies the guide palette accent for the level", () => {
+    const { container } = render(<DifficultyBadge difficulty="difficult" />);
+    const chip = container.firstElementChild as HTMLElement;
+    expect(chip).toHaveStyle({
+      color: COLORS.RED,
+      backgroundColor: hexToRgba(COLORS.RED, 0.15),
+    });
   });
 });

@@ -40,6 +40,10 @@ src/
       <ComponentName>.stories.tsx   # Storybook stories (co-located)
       <ComponentName>.test.tsx      # Unit tests (co-located)
       index.ts                      # Barrel export for the component
+  hooks/
+    useControlledState.ts  # Controlled/uncontrolled state bridge
+  types/
+    severity.ts            # GuideSeverity token + HeroUI color maps
   stories/
     Welcome.stories.tsx    # Foundation / onboarding stories only
   test/
@@ -56,8 +60,8 @@ src/
 |------|----------|
 | New guide component | `src/components/<Name>/` |
 | Public export | Add to `src/index.ts` |
-| Shared types | `src/types/` (create when needed) |
-| Shared hooks | `src/hooks/` (create when needed) |
+| Shared types / design tokens | `src/types/` (e.g. `severity.ts`) |
+| Shared hooks | `src/hooks/` (e.g. `useControlledState.ts`) |
 | Shared utilities | `src/utils/` (create when needed) |
 | Design tokens / theme overrides | `src/styles/index.css` (`@theme` block) |
 
@@ -142,19 +146,38 @@ React and React DOM are **peer dependencies** — the host app provides them.
 - Match existing formatting; do not drive-by refactor unrelated files.
 - Minimize scope: smallest correct change for the task at hand.
 
-## Planned domain components (not yet built)
+## Domain components
 
-Future agents should implement these under `src/components/`, grouped in Storybook as `Guide/*`:
+The `Guide/*` set is implemented under `src/components/` and exported from `src/index.ts`. They follow a **composition-first** API (compound components via dot notation) modeled on iFixit guide UX.
 
-- **GuideStep** — numbered step with title, body, completion state
-- **GuideStepList** — ordered sequence with progress
-- **ToolList** — tools/parts required for a guide
-- **WarningCallout** — safety warnings (battery, heat, ESD, etc.)
-- **MediaFigure** — images/video with captions and annotations
-- **DifficultyBadge** — easy / moderate / difficult indicators
-- **GuideLayout** — page shell for step content + sidebar navigation
+### Shared severity token
 
-Refer to iFixit guide UX for interaction patterns: clear step numbering, tool lists up front, prominent safety callouts, and large instructional media.
+`src/types/severity.ts` defines `GuideSeverity` (`note · info · tip · caution · danger`) and maps it onto HeroUI semantic colors. It is the single source of tone for step bullets, image annotations, and callouts — reuse it instead of hardcoding colors.
+
+| Severity | HeroUI color | Typical use |
+|----------|--------------|-------------|
+| `note` | default | neutral instruction |
+| `info` | accent | reversible / informational |
+| `tip` | success | helpful suggestion, reassembly |
+| `caution` | warning | minor hazard |
+| `danger` | danger | serious hazard |
+
+### Components
+
+- **DifficultyBadge** — `<DifficultyBadge difficulty="moderate" />`. Color-coded pill (easy → green, moderate → amber, difficult → red) with an optional gauge icon.
+- **WarningCallout** — `<WarningCallout severity="danger" title="…">…</WarningCallout>`. Wraps HeroUI `Alert`; `severity` drives status, default icon, and default title.
+- **MediaFigure** — `<MediaFigure src alt caption annotations={[{ x, y, severity, label }]} />`. Image/video with caption and percentage-positioned markers (colors come from severity).
+- **ToolList** + **ToolList.Item** — titled card listing tools/parts (`name`, `thumbnail`, `href`, `quantity`, `price`).
+- **GuideStep** + **GuideStep.Media** / **GuideStep.Bullets** / **GuideStep.Bullet** — a numbered step with a two-column body (main image left; hover thumbnails + bullets right). Up to **three** `MediaFigure`s in `.Media` share a thumbnail gallery — hover/focus a thumb to swap the main image. Stacks on viewports below `sm`. Completion is controllable (`isCompleted` / `onCompletedChange`) or uncontrolled (`defaultCompleted`).
+- **GuideStepList** — wraps `GuideStep`s; auto-numbers them, owns their completion state, and renders a derived progress bar. Listen via `onProgressChange`.
+- **GuideLayout** + **GuideLayout.Header** / **GuideLayout.Intro** / **GuideLayout.Sidebar** / **GuideLayout.Content** — responsive page shell: full-width header, then intro copy beside tools/parts, then full-width steps. On mobile the intro row stacks (intro first, sidebar second).
+
+### Conventions for new guide components
+
+- Compose HeroUI primitives; expose compound parts with `Object.assign(Root, { Part })`.
+- Reuse `GuideSeverity` for any tone/color decision.
+- Add `"use client"` only to components that use state, effects, or handlers (e.g. `GuideStep`, `GuideStepList`).
+- Keep media/positional data as props (e.g. `annotations`); keep structure as composable children.
 
 ## What not to do
 

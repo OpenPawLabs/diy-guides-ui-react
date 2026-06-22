@@ -1,0 +1,132 @@
+import type { ReactNode } from "react";
+import { Chip, cn } from "@heroui/react";
+import {
+  DifficultyBadge,
+  type Difficulty,
+} from "../DifficultyBadge";
+
+export interface GuideLayoutProps {
+  /** `GuideLayout.Header`, `GuideLayout.Intro`, `GuideLayout.Sidebar`, and `GuideLayout.Content`. */
+  children: ReactNode;
+  className?: string;
+}
+
+export interface GuideLayoutHeaderProps {
+  /** Guide title. */
+  title: ReactNode;
+  /** Difficulty level — rendered as a `DifficultyBadge`. */
+  difficulty?: Difficulty;
+  /** Time estimate text, e.g. "20 – 30 minutes". */
+  timeEstimate?: ReactNode;
+  /** Byline / metadata line (contributors, last updated, …). */
+  meta?: ReactNode;
+  className?: string;
+}
+
+export interface GuideLayoutIntroProps {
+  /** Introduction / overview copy beside the tools sidebar. */
+  children: ReactNode;
+  className?: string;
+}
+
+function GuideLayoutHeader({
+  title,
+  difficulty,
+  timeEstimate,
+  meta,
+  className,
+}: GuideLayoutHeaderProps) {
+  const hasBadges = difficulty != null || timeEstimate != null;
+
+  return (
+    <header
+      className={cn(
+        "flex flex-col gap-4 border-b border-default pb-6 md:[grid-area:header]",
+        className,
+      )}
+    >
+      <div className="flex flex-col gap-1.5">
+        <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
+        {meta != null && (
+          <div className="text-sm text-default-500">{meta}</div>
+        )}
+      </div>
+
+      {hasBadges && (
+        <div className="flex flex-wrap items-center gap-2">
+          {difficulty != null && <DifficultyBadge difficulty={difficulty} />}
+          {timeEstimate != null && (
+            <Chip variant="soft" color="default">
+              <Chip.Label>{timeEstimate}</Chip.Label>
+            </Chip>
+          )}
+        </div>
+      )}
+    </header>
+  );
+}
+
+/** Introduction column — sits left of `Sidebar` on desktop. */
+function GuideLayoutIntro({ children, className }: GuideLayoutIntroProps) {
+  return (
+    <div className={cn("min-w-0 md:[grid-area:intro]", className)}>
+      <div className="max-w-prose text-default-700">{children}</div>
+    </div>
+  );
+}
+
+/** "What you need" column — sits right of `Intro` on desktop. */
+function GuideLayoutSidebar({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <aside className={cn("min-w-0 md:[grid-area:sidebar]", className)}>
+      <div className="flex flex-col gap-4">{children}</div>
+    </aside>
+  );
+}
+
+/** Full-width main column — typically holds a `GuideStepList`. */
+function GuideLayoutContent({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <main className={cn("min-w-0 w-full md:[grid-area:main]", className)}>
+      {children}
+    </main>
+  );
+}
+
+/**
+ * Responsive page shell for a guide: a full-width `Header`, an intro row with
+ * `Intro` (description) beside `Sidebar` (tools/parts), then full-width `Content`
+ * (steps). On mobile the intro row stacks with intro first, then sidebar.
+ */
+export const GuideLayout = Object.assign(
+  function GuideLayoutRoot({ children, className }: GuideLayoutProps) {
+    return (
+      <div
+        className={cn(
+          "mx-auto grid w-full max-w-6xl grid-cols-1 gap-x-8 gap-y-8 md:grid-cols-[minmax(0,1fr)_20rem] md:[grid-template-areas:'header_header'_'intro_sidebar'_'main_main']",
+          className,
+        )}
+      >
+        {children}
+      </div>
+    );
+  },
+  {
+    Header: GuideLayoutHeader,
+    Intro: GuideLayoutIntro,
+    Sidebar: GuideLayoutSidebar,
+    Content: GuideLayoutContent,
+  },
+);

@@ -69,6 +69,6 @@ Manually confirm new stories render in Storybook when UI changes are involved.
 - No app framework, API routes, or database code.
 - No commits unless the user asks.
 
-## Planned `Guide/*` components
+## `Guide/*` components (implemented)
 
-GuideStep, GuideStepList, ToolList, WarningCallout, MediaFigure, DifficultyBadge, GuideLayout — see AGENTS.md for descriptions.
+GuideLayout, GuideStepList, GuideStep, MediaFigure, ToolList, WarningCallout, DifficultyBadge — all built, tested, and documented in Storybook. They use a composition-first (compound) API and share the `GuideSeverity` token in `src/types/severity.ts`. See AGENTS.md for the full API reference and conventions before extending them.

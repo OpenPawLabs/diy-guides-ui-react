@@ -47,7 +47,6 @@ export const Default: Story = {
           <GuideStep.Media>
             <MediaFigure
               src="https://placehold.co/800x600/e2e8f0/1e293b/png?text=Open+case"
-              alt="Opening the case"
             />
           </GuideStep.Media>
           <GuideStep.Bullets>
@@ -61,7 +60,6 @@ export const Default: Story = {
           <GuideStep.Media>
             <MediaFigure
               src="https://placehold.co/800x600/fee2e2/b91c1c/png?text=Battery"
-              alt="Disconnecting the battery"
             />
           </GuideStep.Media>
           <GuideStep.Bullets>
@@ -74,7 +72,6 @@ export const Default: Story = {
           <GuideStep.Media>
             <MediaFigure
               src="https://placehold.co/800x600/dbeafe/1e40af/png?text=Install"
-              alt="Installing the new part"
             />
           </GuideStep.Media>
           <GuideStep.Bullets>
@@ -105,7 +102,6 @@ export const WithStartingProgress: Story = {
           <GuideStep.Media>
             <MediaFigure
               src="https://placehold.co/800x600/e2e8f0/1e293b/png?text=Done"
-              alt="Completed step"
             />
           </GuideStep.Media>
           <GuideStep.Bullets>
@@ -116,7 +112,6 @@ export const WithStartingProgress: Story = {
           <GuideStep.Media>
             <MediaFigure
               src="https://placehold.co/800x600/dbeafe/1e40af/png?text=Next"
-              alt="Next step"
             />
           </GuideStep.Media>
           <GuideStep.Bullets>
@@ -144,7 +139,6 @@ export const WithoutProgressBar: Story = {
           <GuideStep.Media>
             <MediaFigure
               src="https://placehold.co/800x600/e2e8f0/1e293b/png?text=Step+1"
-              alt="First step"
             />
           </GuideStep.Media>
           <GuideStep.Bullets>
@@ -155,7 +149,6 @@ export const WithoutProgressBar: Story = {
           <GuideStep.Media>
             <MediaFigure
               src="https://placehold.co/800x600/dbeafe/1e40af/png?text=Step+2"
-              alt="Second step"
             />
           </GuideStep.Media>
           <GuideStep.Bullets>

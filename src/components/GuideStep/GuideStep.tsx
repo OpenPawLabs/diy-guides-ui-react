@@ -279,7 +279,6 @@ function GuideStepBody({
         {active &&
           cloneElement(active, {
             className: cn("w-full", active.props.className),
-            caption: undefined,
           })}
       </div>
 
@@ -302,7 +301,7 @@ function GuideStepBody({
                 )}
                 onMouseEnter={() => setActiveIndex(index)}
                 onFocus={() => setActiveIndex(index)}
-                aria-label={figure.props.alt}
+                aria-label={`Image ${index + 1}`}
                 aria-pressed={index === activeIndex}
               >
                 <img

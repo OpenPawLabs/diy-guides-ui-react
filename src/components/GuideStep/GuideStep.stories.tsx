@@ -12,7 +12,7 @@ A step is built from two required slots:
 \`\`\`tsx
 <GuideStep title="Soften the adhesive">
   <GuideStep.Media>
-    <MediaFigure src="..." alt="..." />
+    <MediaFigure src="..." />
   </GuideStep.Media>
   <GuideStep.Bullets>
     <GuideStep.Bullet>Heat the edge for a minute.</GuideStep.Bullet>
@@ -23,9 +23,7 @@ A step is built from two required slots:
 ## GuideStep.Media
 
 Holds **one to three** \`MediaFigure\` elements. The first is the main image; any
-others become hover/focus thumbnails that swap the main view. The main image's
-caption is hidden here so the bullets stay the focus — put that detail in a
-bullet instead.
+others become hover/focus thumbnails that swap the main view.
 
 ## GuideStep.Bullets and GuideStep.Bullet
 
@@ -86,7 +84,6 @@ export const Anatomy: Story = {
         <GuideStep.Media>
           <MediaFigure
             src="https://placehold.co/800x600/e2e8f0/1e293b/png?text=Heat+cover"
-            alt="Heating the back cover"
             annotations={[
               { x: 30, y: 40, color: "ORANGE", label: 1 },
               { x: 70, y: 60, color: "BLUE", label: 2 },
@@ -122,15 +119,12 @@ export const MultipleImages: Story = {
         <GuideStep.Media>
           <MediaFigure
             src="https://placehold.co/800x600/e2e8f0/1e293b/png?text=Overview"
-            alt="Top-down view of the opened device"
           />
           <MediaFigure
             src="https://placehold.co/800x600/dbeafe/1e40af/png?text=Connector"
-            alt="Battery connector close-up"
           />
           <MediaFigure
             src="https://placehold.co/800x600/fef3c7/b45309/png?text=Screws"
-            alt="Screw locations highlighted"
           />
         </GuideStep.Media>
         <GuideStep.Bullets>
@@ -163,7 +157,6 @@ export const DotBullets: Story = {
         <GuideStep.Media>
           <MediaFigure
             src="https://placehold.co/800x600/e2e8f0/1e293b/png?text=Board"
-            alt="Logic board with connectors"
             annotations={[
               { x: 30, y: 35, color: "RED", label: 1 },
               { x: 60, y: 45, color: "ORANGE", label: 2 },
@@ -204,7 +197,6 @@ export const SemanticBullets: Story = {
         <GuideStep.Media>
           <MediaFigure
             src="https://placehold.co/800x600/fee2e2/b91c1c/png?text=Battery"
-            alt="Battery connector"
           />
         </GuideStep.Media>
         <GuideStep.Bullets>
@@ -242,7 +234,6 @@ export const Completed: Story = {
         <GuideStep.Media>
           <MediaFigure
             src="https://placehold.co/800x600/e2e8f0/1e293b/png?text=Done"
-            alt="Completed step"
           />
         </GuideStep.Media>
         <GuideStep.Bullets>
@@ -269,7 +260,6 @@ export const WithoutCompletion: Story = {
         <GuideStep.Media>
           <MediaFigure
             src="https://placehold.co/800x600/dbeafe/1e40af/png?text=Reassemble"
-            alt="Reassembling the device"
           />
         </GuideStep.Media>
         <GuideStep.Bullets>

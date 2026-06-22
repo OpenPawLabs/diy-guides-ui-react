@@ -11,7 +11,6 @@ function Step({ title, ...props }: GuideStepProps) {
       <GuideStep.Media>
         <MediaFigure
           src="https://placehold.co/800x600/png?text=Step"
-          alt={`${title} photo`}
         />
       </GuideStep.Media>
       <GuideStep.Bullets>

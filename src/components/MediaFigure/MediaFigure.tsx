@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
 import { cn } from "@heroui/react";
 import {
   COLORS,
@@ -6,6 +6,8 @@ import {
   markerTextColor,
   type GuideColor,
 } from "../../types/colors";
+import type { MediaDisplayRegion } from "../../utils/mediaCrop";
+import { MediaFigureMedia } from "./MediaFigureMedia";
 
 /** Shared fields for every annotation shape. */
 interface MediaAnnotationBase {
@@ -57,6 +59,8 @@ export type MediaAnnotation =
   | PointAnnotation
   | CircleAnnotation
   | RectangleAnnotation;
+
+export type { MediaDisplayRegion };
 
 function isCircleAnnotation(
   annotation: MediaAnnotation,
@@ -140,57 +144,43 @@ function renderAnnotation(annotation: MediaAnnotation, index: number) {
 export interface MediaFigureProps {
   /** Image or video source URL. */
   src: string;
-  /** Required alternative text / accessible name for the media. */
-  alt: string;
   /** Media kind. @default "image" */
   type?: "image" | "video";
-  /** Optional caption rendered beneath the frame. */
-  caption?: ReactNode;
-  /** Markers overlaid on the media, positioned by percentage. */
+  /** Markers overlaid on the media, positioned by percentage of the visible frame. */
   annotations?: MediaAnnotation[];
-  /** CSS `aspect-ratio` for the frame, e.g. `"4/3"`. @default "4/3" */
-  aspectRatio?: string;
+  /**
+   * When set, show this 4:3 source-pixel rect (`height` is `round(width × 3 / 4)`),
+   * scaled to fill the frame without re-encoding the image.
+   */
+  displayRegion?: MediaDisplayRegion;
   className?: string;
 }
 
 /**
- * Instructional image or video with an optional caption and percentage-positioned
- * annotation overlays. Point markers use {@link GuideColor} values so they can be
- * visually linked to matching `GuideStep` bullets; circles and rectangles use the
- * same color for their outline and fill.
+ * Instructional image or video with percentage-positioned annotation overlays.
+ * The frame is always 4:3; non-4:3 sources are center-cropped unless
+ * `displayRegion` selects a source-pixel crop. Point markers use
+ * {@link GuideColor} values so they can be visually linked to matching `GuideStep`
+ * bullets; circles and rectangles use the same color for their outline and fill.
  */
 export function MediaFigure({
   src,
-  alt,
   type = "image",
-  caption,
   annotations = [],
-  aspectRatio = "4/3",
+  displayRegion,
   className,
 }: MediaFigureProps) {
   return (
     <figure className={cn("flex flex-col gap-2", className)}>
-      <div
-        className="relative overflow-hidden rounded-lg border border-default bg-default-soft"
-        style={{ aspectRatio } as CSSProperties}
-      >
-        {type === "video" ? (
-          <video
-            src={src}
-            aria-label={alt}
-            controls
-            className="size-full object-cover"
-          />
-        ) : (
-          <img src={src} alt={alt} className="size-full object-cover" />
-        )}
+      <div className="relative aspect-[4/3] overflow-hidden rounded-lg border border-default bg-default-soft">
+        <MediaFigureMedia
+          src={src}
+          type={type}
+          displayRegion={displayRegion}
+        />
 
         {annotations.map(renderAnnotation)}
       </div>
-
-      {caption != null && (
-        <figcaption className="text-sm text-default-500">{caption}</figcaption>
-      )}
     </figure>
   );
 }

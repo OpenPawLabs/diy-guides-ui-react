@@ -11,7 +11,7 @@ Active development. The core guide component set is implemented, tested, and doc
 | `GuideLayout` | Responsive page shell: header, intro + tools row, full-width steps |
 | `GuideStepList` | Auto-numbered step sequence with a derived progress bar |
 | `GuideStep` | A single step — number badge, completion checkbox, media, and bulleted instructions |
-| `MediaFigure` | Image/video with caption and percentage-positioned annotation markers |
+| `MediaFigure` | Image/video with percentage-positioned annotation markers |
 | `ToolList` | Titled card of required tools and parts |
 | `Callout` | Safety / informational callout (`note` → `danger` types) |
 | `DifficultyBadge` | Color-coded difficulty pill (easy / moderate / difficult) |
@@ -105,7 +105,6 @@ export function BatteryGuide() {
             <GuideStep.Media>
               <MediaFigure
                 src="/step-1.jpg"
-                alt="Opening the case"
                 annotations={[{ x: 50, y: 45, color: "ORANGE", label: 1 }]}
               />
             </GuideStep.Media>

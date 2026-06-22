@@ -1,24 +1,27 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { MediaFigure } from "./MediaFigure";
 
-const componentDocs = `An instructional image or video with an optional caption and overlaid
-annotations. \`MediaFigure\` is the visual heart of a step — it shows *what* to do
-and points at *where* to do it.
+const componentDocs = `An instructional image or video with overlaid annotations.
+\`MediaFigure\` is the visual heart of a step — it shows *what* to do and points at
+*where* to do it. Put instructional copy in \`GuideStep.Bullet\` content, not on the
+figure itself.
 
 ## Media
 
-- \`src\` and \`alt\` — the media URL and its required accessible description.
+- \`src\` — the media URL.
 - \`type\` — \`"image"\` (default) or \`"video"\` (renders a \`<video controls>\`).
-- \`aspectRatio\` — any CSS aspect ratio such as \`"16/9"\`; defaults to \`"4/3"\`.
-- \`caption\` — text beneath the frame. Inside a \`GuideStep\` the main image's
-  caption is hidden so the bullets stay the focus — put that detail in a bullet.
+- **Fixed 4:3 frame** — every figure uses the same aspect ratio for consistent step
+  layout. Non-4:3 uploads are center-cropped to fit.
+- \`displayRegion\` — optional \`{ x, y, width }\` in **source pixels** for an exact
+  4:3 crop or zoom without re-encoding the image. Height is always
+  \`round(width × 3 / 4)\`.
 
 ## Annotations
 
 Annotations are markers drawn on top of the media. Every annotation is positioned
-with **percentages from 0 to 100**, where \`0,0\` is the top-left corner and
-\`100,100\` is the bottom-right. Percentages keep markers aligned at any size or
-aspect ratio. Pass them as an array to the \`annotations\` prop.
+with **percentages from 0 to 100 of the visible frame**, where \`0,0\` is the
+top-left corner and \`100,100\` is the bottom-right — independent of
+\`displayRegion\`. Pass them as an array to the \`annotations\` prop.
 
 There are three shapes:
 
@@ -47,13 +50,9 @@ const meta = {
   },
   argTypes: {
     type: { control: "inline-radio", options: ["image", "video"] },
-    aspectRatio: { control: "text" },
   },
   args: {
     src: "https://placehold.co/800x600/e2e8f0/1e293b/png?text=Guide+photo",
-    alt: "Opening the device with a plastic pry tool",
-    aspectRatio: "4/3",
-    caption: "Insert the pry tool into the seam along the bottom edge.",
   },
 } satisfies Meta<typeof MediaFigure>;
 
@@ -66,7 +65,7 @@ export const Default: Story = {
     docs: {
       description: {
         story:
-          "The base figure: an image with a caption and no annotations. Use the controls to try a different aspect ratio or switch to a video.",
+          "The base figure: an image with no annotations. Use the controls to switch to a video.",
       },
     },
   },
@@ -90,7 +89,6 @@ export const WithPointAnnotations: Story = {
     <div className="max-w-md">
       <MediaFigure
         {...args}
-        caption="Three points to find before you start prying."
         annotations={[
           { type: "point", x: 28, y: 35, color: "GREY", label: 1, title: "Pry point" },
           { type: "point", x: 64, y: 52, color: "ORANGE", label: 2, title: "Hidden clip" },
@@ -114,7 +112,6 @@ export const WithShapeAnnotations: Story = {
     <div className="max-w-md">
       <MediaFigure
         {...args}
-        caption="Circle marks the heating area; rectangle marks the clip row."
         annotations={[
           {
             type: "circle",
@@ -159,8 +156,6 @@ export const Video: Story = {
   args: {
     type: "video",
     src: "https://www.w3schools.com/html/mov_bbb.mp4",
-    alt: "Short demonstration clip",
-    caption: "A short clip can be clearer than a photo for motion-based steps.",
   },
   render: (args) => (
     <div className="max-w-md">
@@ -169,20 +164,37 @@ export const Video: Story = {
   ),
 };
 
-export const WideAspectRatio: Story = {
+export const TallImageCenterCrop: Story = {
   parameters: {
     docs: {
       description: {
         story:
-          'The frame respects any CSS `aspectRatio`. Use a wide ratio such as `"16/9"` for benches, boards, or panoramas.',
+          "Without `displayRegion`, a non-4:3 source is center-cropped to the fixed 4:3 frame.",
       },
     },
   },
   args: {
-    aspectRatio: "16/9",
+    src: "https://placehold.co/600x900/fef3c7/b45309/png?text=Tall+photo",
+  },
+  render: (args) => (
+    <div className="max-w-md">
+      <MediaFigure {...args} />
+    </div>
+  ),
+};
+
+export const DisplayRegion: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "`displayRegion` zooms to a 4:3 source-pixel rect (`{ x: 320, y: 90, width: 640 }` → 640×480 on a 1280×720 image) without re-encoding.",
+      },
+    },
+  },
+  args: {
     src: "https://placehold.co/1280x720/dbeafe/1e40af/png?text=Workbench+overview",
-    alt: "Wide overview of the workbench layout",
-    caption: "A 16/9 frame suits wide overview shots.",
+    displayRegion: { x: 320, y: 90, width: 640 },
   },
   render: (args) => (
     <div className="max-w-xl">

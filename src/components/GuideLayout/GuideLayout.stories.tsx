@@ -87,16 +87,13 @@ export const FullGuide: Story = {
                 <GuideStep.Media>
                   <MediaFigure
                     src="https://placehold.co/800x600/e2e8f0/1e293b/png?text=Heat+edges"
-                    alt="Heating the rear glass"
                     annotations={[{ x: 50, y: 45, color: "ORANGE", label: 1 }]}
                   />
                   <MediaFigure
                     src="https://placehold.co/800x600/dbeafe/1e40af/png?text=Pry+clips"
-                    alt="Prying the rear glass"
                   />
                   <MediaFigure
                     src="https://placehold.co/800x600/fef3c7/b45309/png?text=Lift+cover"
-                    alt="Lifting the rear cover"
                   />
                 </GuideStep.Media>
                 <GuideStep.Bullets>
@@ -113,7 +110,6 @@ export const FullGuide: Story = {
                 <GuideStep.Media>
                   <MediaFigure
                     src="https://placehold.co/800x600/fee2e2/b91c1c/png?text=Disconnect"
-                    alt="Disconnecting the battery connector"
                   />
                 </GuideStep.Media>
                 <GuideStep.Bullets>
@@ -130,7 +126,6 @@ export const FullGuide: Story = {
                 <GuideStep.Media>
                   <MediaFigure
                     src="https://placehold.co/800x600/dbeafe/1e40af/png?text=Reassemble"
-                    alt="Reassembling the device"
                   />
                 </GuideStep.Media>
                 <GuideStep.Bullets>
@@ -179,7 +174,6 @@ export const WithoutSidebar: Story = {
               <GuideStep.Media>
                 <MediaFigure
                   src="https://placehold.co/800x600/e2e8f0/1e293b/png?text=Settings"
-                  alt="Display settings screen"
                 />
               </GuideStep.Media>
               <GuideStep.Bullets>
@@ -192,7 +186,6 @@ export const WithoutSidebar: Story = {
               <GuideStep.Media>
                 <MediaFigure
                   src="https://placehold.co/800x600/dbeafe/1e40af/png?text=Calibrate"
-                  alt="Calibration target"
                 />
               </GuideStep.Media>
               <GuideStep.Bullets>

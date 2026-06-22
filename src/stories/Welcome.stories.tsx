@@ -70,7 +70,6 @@ const guideExample = `<GuideLayout>
         <GuideStep.Media>
           <MediaFigure
             src="/guides/battery-heat.jpg"
-            alt="Heating the phone edge with an iOpener"
             annotations={[{ x: 54, y: 42, color: "ORANGE", label: 1 }]}
           />
         </GuideStep.Media>
@@ -114,7 +113,7 @@ const layers = [
       {
         name: "MediaFigure",
         description:
-          "The image or video for a step, with captions and markers that point at the exact spot to work on.",
+          "The image or video for a step, with markers that point at the exact spot to work on.",
       },
     ],
   },
@@ -519,8 +518,8 @@ export const WritingGreatGuides: Story = {
       <Section title="Media and annotations">
         <ul className="list-disc space-y-3 pl-5">
           <li>
-            Give every image useful alt text, even when a caption already
-            describes it.
+            Write bullets that describe what the reader should look for in each
+            image.
           </li>
           <li>
             Use point markers for precise spots, circles for areas, and

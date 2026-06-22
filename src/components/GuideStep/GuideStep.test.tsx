@@ -7,7 +7,6 @@ import { MediaFigure } from "../MediaFigure";
 
 const stepPhoto = {
   src: "https://placehold.co/800x600/png?text=Step",
-  alt: "Step photo",
 } as const;
 
 describe("GuideStep", () => {
@@ -115,20 +114,17 @@ describe("GuideStep", () => {
   });
 
   it("renders a two-column body with main image and bullets", () => {
-    render(
+    const { container } = render(
       <GuideStep number={1} title="Open the case">
         <GuideStep.Media>
-          <MediaFigure
-            src="https://placehold.co/800x600/png?text=Main"
-            alt="Main step photo"
-          />
+          <MediaFigure src="https://placehold.co/800x600/png?text=Main" />
         </GuideStep.Media>
         <GuideStep.Bullets>
           <GuideStep.Bullet>Pry along the seam.</GuideStep.Bullet>
         </GuideStep.Bullets>
       </GuideStep>,
     );
-    expect(screen.getByRole("img", { name: "Main step photo" })).toBeInTheDocument();
+    expect(container.querySelector(".aspect-\\[4\\/3\\] img")).toBeInTheDocument();
     expect(screen.getByText("Pry along the seam.")).toBeInTheDocument();
   });
 
@@ -174,17 +170,11 @@ describe("GuideStep", () => {
 
   it("switches the main image when hovering a thumbnail", async () => {
     const user = userEvent.setup();
-    render(
+    const { container } = render(
       <GuideStep number={1} title="Gallery step">
         <GuideStep.Media>
-          <MediaFigure
-            src="https://placehold.co/800x600/png?text=Image+1"
-            alt="First angle"
-          />
-          <MediaFigure
-            src="https://placehold.co/800x600/png?text=Image+2"
-            alt="Second angle"
-          />
+          <MediaFigure src="https://placehold.co/800x600/png?text=Image+1" />
+          <MediaFigure src="https://placehold.co/800x600/png?text=Image+2" />
         </GuideStep.Media>
         <GuideStep.Bullets>
           <GuideStep.Bullet>Follow both views.</GuideStep.Bullet>
@@ -192,7 +182,7 @@ describe("GuideStep", () => {
       </GuideStep>,
     );
 
-    const mainImage = screen.getByRole("img", { name: "First angle" });
+    const mainImage = container.querySelector(".aspect-\\[4\\/3\\] img");
     expect(mainImage).toHaveAttribute(
       "src",
       "https://placehold.co/800x600/png?text=Image+1",
@@ -200,11 +190,11 @@ describe("GuideStep", () => {
 
     const gallery = screen.getByRole("group", { name: "Step images" });
     const secondThumb = within(gallery).getByRole("button", {
-      name: "Second angle",
+      name: "Image 2",
     });
     await user.hover(secondThumb);
 
-    expect(screen.getByRole("img", { name: "Second angle" })).toHaveAttribute(
+    expect(container.querySelector(".aspect-\\[4\\/3\\] img")).toHaveAttribute(
       "src",
       "https://placehold.co/800x600/png?text=Image+2",
     );

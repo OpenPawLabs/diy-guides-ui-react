@@ -23,10 +23,16 @@ export { MediaFigure } from "./components/MediaFigure";
 export type {
   MediaFigureProps,
   MediaAnnotation,
+  MediaDisplayRegion,
   PointAnnotation,
   CircleAnnotation,
   RectangleAnnotation,
 } from "./components/MediaFigure";
+
+export {
+  DISPLAY_REGION_ASPECT,
+  displayRegionHeight,
+} from "./utils/mediaCrop";
 
 export { ToolList } from "./components/ToolList";
 export type { ToolListProps, ToolListItemProps } from "./components/ToolList";

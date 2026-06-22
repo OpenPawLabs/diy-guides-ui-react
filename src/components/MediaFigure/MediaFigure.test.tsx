@@ -1,21 +1,17 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MediaFigure } from "./MediaFigure";
 
 describe("MediaFigure", () => {
-  it("renders an image with its alt text and caption", () => {
-    render(
-      <MediaFigure src="/photo.jpg" alt="Removing the screw" caption="Step photo" />,
-    );
-    expect(screen.getByRole("img", { name: "Removing the screw" })).toBeInTheDocument();
-    expect(screen.getByText("Step photo")).toBeInTheDocument();
+  it("uses a fixed 4:3 frame", () => {
+    const { container } = render(<MediaFigure src="/photo.jpg" />);
+    expect(container.querySelector(".aspect-\\[4\\/3\\]")).toBeInTheDocument();
   });
 
   it("renders a labeled point annotation marker", () => {
     render(
       <MediaFigure
         src="/photo.jpg"
-        alt="Board overview"
         annotations={[{ type: "point", x: 50, y: 50, label: 1, title: "Connector" }]}
       />,
     );
@@ -26,7 +22,6 @@ describe("MediaFigure", () => {
     render(
       <MediaFigure
         src="/photo.jpg"
-        alt="Board overview"
         annotations={[{ x: 50, y: 50, label: "A", title: "Screw" }]}
       />,
     );
@@ -37,7 +32,6 @@ describe("MediaFigure", () => {
     render(
       <MediaFigure
         src="/photo.jpg"
-        alt="Board overview"
         annotations={[{ type: "circle", x: 40, y: 60, radius: 12, title: "Heat zone" }]}
       />,
     );
@@ -50,7 +44,6 @@ describe("MediaFigure", () => {
     render(
       <MediaFigure
         src="/photo.jpg"
-        alt="Board overview"
         annotations={[
           {
             type: "rectangle",
@@ -74,8 +67,74 @@ describe("MediaFigure", () => {
 
   it("renders a video element when type is video", () => {
     const { container } = render(
-      <MediaFigure src="/clip.mp4" alt="Reassembly clip" type="video" />,
+      <MediaFigure src="/clip.mp4" type="video" />,
     );
     expect(container.querySelector("video")).toBeInTheDocument();
+  });
+
+  describe("displayRegion", () => {
+    const boundingRect = {
+      width: 400,
+      height: 300,
+      top: 0,
+      left: 0,
+      right: 400,
+      bottom: 300,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    };
+
+    beforeEach(() => {
+      vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue(
+        boundingRect as DOMRect,
+      );
+      vi.stubGlobal(
+        "ResizeObserver",
+        class {
+          private readonly callback: ResizeObserverCallback;
+
+          constructor(callback: ResizeObserverCallback) {
+            this.callback = callback;
+          }
+
+          observe() {
+            this.callback([], this);
+          }
+
+          disconnect() {}
+          unobserve() {}
+        },
+      );
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+      vi.unstubAllGlobals();
+    });
+
+    it("applies crop styles after the image loads", async () => {
+      const { container } = render(
+        <MediaFigure
+          src="/photo.jpg"
+          displayRegion={{ x: 320, y: 90, width: 640 }}
+        />,
+      );
+
+      const img = container.querySelector("img");
+      expect(img).not.toBeNull();
+      Object.defineProperty(img!, "naturalWidth", { value: 1280, configurable: true });
+      Object.defineProperty(img!, "naturalHeight", { value: 720, configurable: true });
+      fireEvent.load(img!);
+
+      await waitFor(() => {
+        expect(img).toHaveStyle({
+          left: "-200px",
+          top: "-56.25px",
+          width: "800px",
+          height: "450px",
+        });
+      });
+    });
   });
 });

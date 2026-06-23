@@ -5,10 +5,11 @@ import {
   getDisplayRegionStyles,
   type MediaDisplayRegion,
 } from "../../utils/mediaCrop";
+import { MediaFigureModel } from "./MediaFigureModel";
 
 export interface MediaFigureMediaProps {
   src: string;
-  type: "image" | "video";
+  type: "image" | "video" | "model";
   displayRegion?: MediaDisplayRegion;
 }
 
@@ -84,6 +85,10 @@ export function MediaFigureMedia({
       setSourceSize({ width: video.videoWidth, height: video.videoHeight });
     }
   };
+
+  if (type === "model") {
+    return <MediaFigureModel src={src} />;
+  }
 
   return (
     <div ref={frameRef} className="absolute inset-0">

@@ -142,10 +142,10 @@ function renderAnnotation(annotation: MediaAnnotation, index: number) {
 }
 
 export interface MediaFigureProps {
-  /** Image or video source URL. */
+  /** Image, video, or 3D model source URL. */
   src: string;
   /** Media kind. @default "image" */
-  type?: "image" | "video";
+  type?: "image" | "video" | "model";
   /** Markers overlaid on the media, positioned by percentage of the visible frame. */
   annotations?: MediaAnnotation[];
   /**
@@ -157,7 +157,7 @@ export interface MediaFigureProps {
 }
 
 /**
- * Instructional image or video with percentage-positioned annotation overlays.
+ * Instructional image, video, or 3D model with percentage-positioned annotation overlays.
  * The frame is always 4:3; non-4:3 sources are center-cropped unless
  * `displayRegion` selects a source-pixel crop. Point markers use
  * {@link GuideColor} values so they can be visually linked to matching `GuideStep`

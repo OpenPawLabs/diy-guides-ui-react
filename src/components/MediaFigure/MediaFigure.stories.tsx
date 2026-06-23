@@ -9,7 +9,7 @@ figure itself.
 ## Media
 
 - \`src\` — the media URL.
-- \`type\` — \`"image"\` (default) or \`"video"\` (renders a \`<video controls>\`).
+- \`type\` — \`"image"\` (default), \`"video"\` (renders a \`<video controls>\`), or \`"model"\` (interactive 3D viewer via [online-3d-viewer](https://www.npmjs.com/package/online-3d-viewer) with Z-up, free orbit, and orthographic camera).
 - **Fixed 4:3 frame** — every figure uses the same aspect ratio for consistent step
   layout. Non-4:3 uploads are center-cropped to fit.
 - \`displayRegion\` — optional \`{ x, y, width }\` in **source pixels** for an exact
@@ -49,7 +49,7 @@ const meta = {
     docs: { description: { component: componentDocs } },
   },
   argTypes: {
-    type: { control: "inline-radio", options: ["image", "video"] },
+    type: { control: "inline-radio", options: ["image", "video", "model"] },
   },
   args: {
     src: "https://placehold.co/800x600/e2e8f0/1e293b/png?text=Guide+photo",
@@ -156,6 +156,26 @@ export const Video: Story = {
   args: {
     type: "video",
     src: "https://www.w3schools.com/html/mov_bbb.mp4",
+  },
+  render: (args) => (
+    <div className="max-w-md">
+      <MediaFigure {...args} />
+    </div>
+  ),
+};
+
+export const Model3D: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Set `type="model"` to embed an interactive 3D model. The viewer uses Z axis up, free orbit navigation, and an orthographic camera. Drag to rotate, scroll to zoom.',
+      },
+    },
+  },
+  args: {
+    type: "model",
+    src: "https://raw.githubusercontent.com/kovacsv/Online3DViewer/master/test/testfiles/stl/stl_ascii.stl",
   },
   render: (args) => (
     <div className="max-w-md">

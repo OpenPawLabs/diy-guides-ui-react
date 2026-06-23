@@ -14,7 +14,7 @@ export default defineConfig({
         format === "es" ? "diy-guides-ui.js" : "diy-guides-ui.cjs",
     },
     rollupOptions: {
-      external: ["react", "react-dom", "react/jsx-runtime"],
+      external: ["react", "react-dom", "react/jsx-runtime", "online-3d-viewer"],
       output: {
         assetFileNames: "style.css",
         globals: {

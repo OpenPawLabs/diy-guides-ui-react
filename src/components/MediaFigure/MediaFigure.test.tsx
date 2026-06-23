@@ -2,7 +2,54 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MediaFigure } from "./MediaFigure";
 
+const mockDestroy = vi.fn();
+const mockLoadModelFromUrlList = vi.fn();
+const mockResize = vi.fn();
+const mockSetNavigationMode = vi.fn();
+const mockSetUpVector = vi.fn();
+const mockGetBoundingSphere = vi.fn(() => ({}));
+const mockFitSphereToWindow = vi.fn();
+
+vi.mock("online-3d-viewer", () => ({
+  EmbeddedViewer: vi.fn(function EmbeddedViewer(
+    _container: HTMLElement,
+    parameters: { onModelLoaded?: () => void },
+  ) {
+    const instance = {
+      LoadModelFromUrlList: mockLoadModelFromUrlList,
+      Resize: mockResize,
+      Destroy: mockDestroy,
+      GetViewer: () => ({
+        SetNavigationMode: mockSetNavigationMode,
+        SetUpVector: mockSetUpVector,
+        GetBoundingSphere: mockGetBoundingSphere,
+        FitSphereToWindow: mockFitSphereToWindow,
+      }),
+    };
+
+    queueMicrotask(() => {
+      parameters.onModelLoaded?.();
+    });
+
+    return instance;
+  }),
+  ProjectionMode: { Orthographic: 2 },
+  NavigationMode: { FreeOrbit: 2 },
+  Direction: { Z: 3 },
+  RGBAColor: vi.fn(function RGBAColor() {}),
+}));
+
 describe("MediaFigure", () => {
+  beforeEach(() => {
+    mockDestroy.mockClear();
+    mockLoadModelFromUrlList.mockClear();
+    mockResize.mockClear();
+    mockSetNavigationMode.mockClear();
+    mockSetUpVector.mockClear();
+    mockGetBoundingSphere.mockClear();
+    mockFitSphereToWindow.mockClear();
+  });
+
   it("uses a fixed 4:3 frame", () => {
     const { container } = render(<MediaFigure src="/photo.jpg" />);
     expect(container.querySelector(".aspect-\\[4\\/3\\]")).toBeInTheDocument();
@@ -70,6 +117,21 @@ describe("MediaFigure", () => {
       <MediaFigure src="/clip.mp4" type="video" />,
     );
     expect(container.querySelector("video")).toBeInTheDocument();
+  });
+
+  it("renders a 3D model viewer when type is model", async () => {
+    render(<MediaFigure src="/part.stl" type="model" />);
+
+    await waitFor(() => {
+      expect(mockLoadModelFromUrlList).toHaveBeenCalledWith(["/part.stl"]);
+    });
+
+    expect(
+      screen.getByRole("img", { name: "Interactive 3D model" }),
+    ).toBeInTheDocument();
+    expect(mockSetNavigationMode).toHaveBeenCalledWith(2);
+    expect(mockSetUpVector).toHaveBeenCalledWith(3, false);
+    expect(mockFitSphereToWindow).toHaveBeenCalled();
   });
 
   describe("displayRegion", () => {

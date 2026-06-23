@@ -48,6 +48,10 @@ export const Default: Story = {
             <MediaFigure
               src="https://placehold.co/800x600/e2e8f0/1e293b/png?text=Open+case"
             />
+            <MediaFigure
+              src="https://raw.githubusercontent.com/kovacsv/Online3DViewer/master/test/testfiles/stl/stl_ascii.stl"
+              type="model"
+            />
           </GuideStep.Media>
           <GuideStep.Bullets>
             <GuideStep.Bullet variant="caution">

@@ -26,7 +26,8 @@ export function MediaFigureModel({ src }: MediaFigureModelProps) {
 
       const embeddedViewer = new OV.EmbeddedViewer(container, {
         projectionMode: OV.ProjectionMode.Orthographic,
-        backgroundColor: new OV.RGBAColor(0, 0, 0, 0),
+        backgroundColor: new OV.RGBAColor(219, 234, 254, 255),
+        defaultColor: new OV.RGBColor(30, 64, 175),
         onModelLoaded: () => {
           const o3dv = embeddedViewer.GetViewer();
           o3dv.SetNavigationMode(OV.NavigationMode.FreeOrbit);

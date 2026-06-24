@@ -347,10 +347,10 @@ describe("GuideStep editing affordances", () => {
     warn.mockRestore();
   });
 
-  it("supports select, replace, remove, and add affordances with images present", async () => {
+  it("supports select, annotate, remove, and add affordances with images present", async () => {
     const user = userEvent.setup();
     const onSelectImage = vi.fn();
-    const onReplaceImage = vi.fn();
+    const onEditAnnotations = vi.fn();
     const onRemoveImage = vi.fn();
     const onAddImage = vi.fn();
     render(
@@ -360,7 +360,7 @@ describe("GuideStep editing affordances", () => {
         completable={false}
         mediaEditing={{
           onSelectImage,
-          onReplaceImage,
+          onEditAnnotations,
           onRemoveImage,
           onAddImage,
         }}
@@ -387,8 +387,8 @@ describe("GuideStep editing affordances", () => {
     await user.click(within(gallery).getByRole("button", { name: "Add image" }));
     expect(onAddImage).toHaveBeenCalledTimes(1);
 
-    await user.click(screen.getByRole("button", { name: "Replace image" }));
-    expect(onReplaceImage).toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "Edit annotations" }));
+    expect(onEditAnnotations).toHaveBeenCalled();
   });
 
   it("reorders thumbnails via drag and drop when onReorderImage is set", () => {

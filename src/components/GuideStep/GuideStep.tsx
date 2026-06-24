@@ -30,7 +30,7 @@ const COMPLETE_CHECKBOX_GREEN = "#0B7A47";
 
 /**
  * Optional, editor-only media affordances. Presence switches `GuideStep.Media`
- * into edit mode: an empty-state add target, click-to-replace on the main image,
+ * into edit mode: an empty-state add target, click-to-annotate on the main image,
  * a remove control per thumbnail, a "+" tile to append, and (with `onReorderImage`)
  * drag-to-reorder thumbnails. All members are intent callbacks — the library
  * performs no file or menu logic. Omit entirely for the read-only reader experience.
@@ -38,8 +38,8 @@ const COMPLETE_CHECKBOX_GREEN = "#0B7A47";
 export interface GuideStepMediaEditing {
   /** Append a new image (e.g. open a file picker). Drives the empty target and "+" tile. */
   onAddImage?: () => void;
-  /** Replace the image at `index` (fired by clicking the main image). */
-  onReplaceImage?: (index: number) => void;
+  /** Edit annotations for the image at `index` (fired by clicking the main image). */
+  onEditAnnotations?: (index: number) => void;
   /** Remove the image at `index` (fired by a thumbnail's remove control). */
   onRemoveImage?: (index: number) => void;
   /**
@@ -70,7 +70,7 @@ export interface GuideStepProps {
   completable?: boolean;
   /**
    * Editor-only media affordances. When provided, the media area becomes
-   * editable (add / replace / remove / select). Leave undefined for readers.
+   * editable (add / annotate / remove / select). Leave undefined for readers.
    */
   mediaEditing?: GuideStepMediaEditing;
   /** Step body — requires `GuideStep.Media` (≥1 image) and `GuideStep.Bullets` (≥1 bullet). */
@@ -233,6 +233,23 @@ function RemoveIcon() {
       className="size-3"
     >
       <path d="M18 6 6 18M6 6l12 12" />
+    </svg>
+  );
+}
+
+function PencilIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="size-4"
+    >
+      <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
     </svg>
   );
 }
@@ -624,10 +641,11 @@ function GuideStepBody({
               })}
               <button
                 type="button"
-                onClick={() => mediaEditing?.onReplaceImage?.(activeIndex)}
-                className="absolute inset-0 flex items-center justify-center rounded-lg text-sm font-semibold text-background opacity-0 transition hover:bg-foreground/40 hover:opacity-100 focus-visible:bg-foreground/40 focus-visible:opacity-100 focus-visible:outline-none"
+                onClick={() => mediaEditing?.onEditAnnotations?.(activeIndex)}
+                className="absolute inset-0 flex items-center justify-center gap-2 rounded-lg text-sm font-semibold text-background opacity-0 transition hover:bg-foreground/40 hover:opacity-100 focus-visible:bg-foreground/40 focus-visible:opacity-100 focus-visible:outline-none"
               >
-                Replace image
+                <PencilIcon />
+                Edit annotations
               </button>
             </div>
           ) : (

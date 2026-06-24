@@ -64,7 +64,7 @@ that component.
 
 \`GuideStep\` is presentational by default. Three optional, off-by-default props let an
 external editor drive it without changing reader output. Pass \`mediaEditing\` to make
-the media area editable — an empty add target, click-to-replace on the main image, a
+the media area editable — an empty add target, click-to-annotate on the main image, a
 remove control per thumbnail, drag-to-reorder thumbnails (when \`onReorderImage\` is set),
 and a "+" tile to append (up to three). Pass \`editing\` to \`GuideStep.Bullets\` to manage
 the bullet list — a drag handle to reorder (when \`onReorderBullet\` is set and more than
@@ -362,7 +362,7 @@ export const EditingAffordances: Story = {
     docs: {
       description: {
         story:
-          "Optional, editor-only affordances. Passing `mediaEditing` turns the media area into an editor (empty add target, click-to-replace, a remove control per thumbnail, drag-to-reorder thumbnails, and a \"+\" tile). Passing `editing` to `GuideStep.Bullets` manages the bullet list — drag a bullet's grip to reorder, remove with the x, or append with \"+ New bullet\". Passing `onMarkerPress` on a bullet turns its marker into a button — here it cycles the dot color. These are off by default, so the reader output is unchanged.",
+          "Optional, editor-only affordances. Passing `mediaEditing` turns the media area into an editor (empty add target, click-to-annotate, a remove control per thumbnail, drag-to-reorder thumbnails, and a \"+\" tile). Passing `editing` to `GuideStep.Bullets` manages the bullet list — drag a bullet's grip to reorder, remove with the x, or append with \"+ New bullet\". Passing `onMarkerPress` on a bullet turns its marker into a button — here it cycles the dot color. These are off by default, so the reader output is unchanged.",
       },
     },
   },
@@ -380,6 +380,7 @@ export const EditingAffordances: Story = {
       "https://placehold.co/800x600/e2e8f0/1e293b/png?text=Overview",
     ]);
     const [active, setActive] = useState(0);
+    const [annotatingIndex, setAnnotatingIndex] = useState<number | null>(null);
     const [colorIndex, setColorIndex] = useState(0);
     const [seq, setSeq] = useState(2);
     const [bullets, setBullets] = useState([
@@ -401,10 +402,7 @@ export const EditingAffordances: Story = {
             activeIndex: Math.min(active, Math.max(images.length - 1, 0)),
             onSelectImage: setActive,
             onAddImage: () => setImages((prev) => [...prev, nextImage()]),
-            onReplaceImage: (index) =>
-              setImages((prev) =>
-                prev.map((src, i) => (i === index ? nextImage() : src)),
-              ),
+            onEditAnnotations: (index) => setAnnotatingIndex(index),
             onRemoveImage: (index) =>
               setImages((prev) => prev.filter((_, i) => i !== index)),
             onReorderImage: (from, to) =>
@@ -460,6 +458,13 @@ export const EditingAffordances: Story = {
             )}
           </GuideStep.Bullets>
         </GuideStep>
+        {annotatingIndex !== null && (
+          <p className="mt-3 text-sm text-default-500">
+            Editing annotations for image {annotatingIndex + 1}. In a real editor this
+            opens the annotation modal; see <code>Guide/MediaFigure</code> for the
+            interactive canvas.
+          </p>
+        )}
       </div>
     );
   },

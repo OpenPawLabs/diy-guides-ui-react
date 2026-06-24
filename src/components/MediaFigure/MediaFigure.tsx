@@ -8,6 +8,7 @@ import {
 } from "../../types/colors";
 import type { MediaDisplayRegion } from "../../utils/mediaCrop";
 import { MediaFigureMedia } from "./MediaFigureMedia";
+import { MediaFigureAnnotationEditor } from "./MediaFigureAnnotationEditor";
 
 /** Shared fields for every annotation shape. */
 interface MediaAnnotationBase {
@@ -61,6 +62,34 @@ export type MediaAnnotation =
   | RectangleAnnotation;
 
 export type { MediaDisplayRegion };
+
+/** Active annotation tool: `select` edits existing markers; the rest draw a new shape. */
+export type AnnotationTool = "select" | "point" | "circle" | "rectangle";
+
+/**
+ * Editor-only annotation affordances. Passing this turns the figure into an
+ * interactive annotation canvas — click or drag to draw, click to select, drag to
+ * move, and drag the handles to resize (the lightbox is disabled). The library owns
+ * all frame-percentage geometry and reports intent through these callbacks; tool
+ * selection, color choice, and persistence stay with the consumer. Editing relies on
+ * stable annotation `id`s so selection and updates can target a specific marker.
+ */
+export interface MediaAnnotationEditing {
+  /** Active tool (controlled). */
+  tool: AnnotationTool;
+  /** Color applied to newly drawn annotations. */
+  color: GuideColor;
+  /** Selected annotation id, or `null` when nothing is selected (controlled). */
+  selectedId?: string | null;
+  /** Selection changed to an annotation `id`, or `null` when cleared. */
+  onSelect?: (id: string | null) => void;
+  /** A new annotation was drawn. It carries no `id` — the consumer assigns one. */
+  onAdd?: (annotation: MediaAnnotation) => void;
+  /** The annotation with `id` was moved or resized. */
+  onChange?: (id: string, annotation: MediaAnnotation) => void;
+  /** The selected annotation was deleted via `Delete` / `Backspace`. */
+  onRemove?: (id: string) => void;
+}
 
 function isCircleAnnotation(
   annotation: MediaAnnotation,
@@ -159,6 +188,11 @@ export interface MediaFigureProps {
    * another action. @default true
    */
   zoomable?: boolean;
+  /**
+   * Editor-only annotation affordances. When set, the figure becomes an interactive
+   * annotation canvas (the lightbox is disabled). Leave undefined for readers.
+   */
+  annotationEditing?: MediaAnnotationEditing;
   className?: string;
 }
 
@@ -177,6 +211,7 @@ export function MediaFigure({
   annotations = [],
   displayRegion,
   zoomable = true,
+  annotationEditing,
   className,
 }: MediaFigureProps) {
   const frameClassName =
@@ -184,13 +219,20 @@ export function MediaFigure({
   const frame = (
     <>
       <MediaFigureMedia src={src} type={type} displayRegion={displayRegion} />
-      {annotations.map(renderAnnotation)}
+      {annotationEditing ? (
+        <MediaFigureAnnotationEditor
+          annotations={annotations}
+          editing={annotationEditing}
+        />
+      ) : (
+        annotations.map(renderAnnotation)
+      )}
     </>
   );
 
   return (
     <figure className={cn("flex flex-col gap-2", className)}>
-      {zoomable && type === "image" ? (
+      {zoomable && type === "image" && !annotationEditing ? (
         <Modal>
           <Modal.Trigger
             aria-label="View image full size"

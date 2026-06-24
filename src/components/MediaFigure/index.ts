@@ -2,6 +2,8 @@ export { MediaFigure } from "./MediaFigure";
 export type {
   MediaFigureProps,
   MediaAnnotation,
+  MediaAnnotationEditing,
+  AnnotationTool,
   MediaDisplayRegion,
   PointAnnotation,
   CircleAnnotation,

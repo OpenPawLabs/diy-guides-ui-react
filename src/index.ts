@@ -24,6 +24,8 @@ export type {
   MediaFigureProps,
   MediaFigureThumbnailProps,
   MediaAnnotation,
+  MediaAnnotationEditing,
+  AnnotationTool,
   MediaDisplayRegion,
   PointAnnotation,
   CircleAnnotation,

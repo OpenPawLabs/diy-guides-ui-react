@@ -225,3 +225,209 @@ describe("MediaFigure", () => {
     });
   });
 });
+
+describe("MediaFigure annotation editing", () => {
+  const frameRect = {
+    width: 400,
+    height: 300,
+    top: 0,
+    left: 0,
+    right: 400,
+    bottom: 300,
+    x: 0,
+    y: 0,
+    toJSON: () => ({}),
+  } as DOMRect;
+
+  beforeEach(() => {
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue(frameRect);
+    Element.prototype.setPointerCapture = vi.fn();
+    Element.prototype.releasePointerCapture = vi.fn();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  function getEditor() {
+    return screen.getByRole("application", { name: "Annotation editor" });
+  }
+
+  /**
+   * jsdom's `PointerEvent` drops `clientX/clientY`, so dispatch a coordinate-bearing
+   * `MouseEvent` under the pointer event name — React routes it to the pointer handlers.
+   */
+  function firePointer(
+    type: "pointerdown" | "pointermove" | "pointerup",
+    target: Element,
+    clientX = 0,
+    clientY = 0,
+  ) {
+    const event = new MouseEvent(type, { bubbles: true, cancelable: true, clientX, clientY });
+    Object.defineProperty(event, "pointerId", { value: 1, configurable: true });
+    fireEvent(target, event);
+  }
+
+  it("disables the lightbox while editing", () => {
+    render(
+      <MediaFigure
+        src="/photo.jpg"
+        annotationEditing={{ tool: "select", color: "GREY" }}
+      />,
+    );
+    expect(
+      screen.queryByRole("button", { name: "View image full size" }),
+    ).not.toBeInTheDocument();
+    expect(getEditor()).toBeInTheDocument();
+  });
+
+  it("adds a point where the canvas is clicked", () => {
+    const onAdd = vi.fn();
+    render(
+      <MediaFigure
+        src="/photo.jpg"
+        annotationEditing={{ tool: "point", color: "RED", onAdd }}
+      />,
+    );
+    const editor = getEditor();
+    firePointer("pointerdown", editor, 200, 150);
+    firePointer("pointerup", editor);
+    expect(onAdd).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "point", x: 50, y: 50, color: "RED" }),
+    );
+  });
+
+  it("draws a circle by dragging out from the center", () => {
+    const onAdd = vi.fn();
+    render(
+      <MediaFigure
+        src="/photo.jpg"
+        annotationEditing={{ tool: "circle", color: "ORANGE", onAdd }}
+      />,
+    );
+    const editor = getEditor();
+    firePointer("pointerdown", editor, 200, 150);
+    firePointer("pointermove", editor, 280, 150);
+    firePointer("pointerup", editor);
+    expect(onAdd).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "circle", x: 50, y: 50, radius: 20, color: "ORANGE" }),
+    );
+  });
+
+  it("keeps the draft preview identical to the committed shape (no jump on release)", () => {
+    const onAdd = vi.fn();
+    const { container } = render(
+      <MediaFigure
+        src="/photo.jpg"
+        annotationEditing={{ tool: "circle", color: "RED", onAdd }}
+      />,
+    );
+    const editor = getEditor();
+    firePointer("pointerdown", editor, 200, 150);
+    firePointer("pointermove", editor, 204, 150); // sub-minimum drag (1% radius)
+
+    const preview = container.querySelector(".rounded-full.border-2") as HTMLElement;
+    const previewWidth = parseFloat(preview.style.width);
+
+    firePointer("pointerup", editor);
+    const committed = onAdd.mock.calls[0][0];
+
+    // The tiny drag is floored, and what was previewed is exactly what is committed.
+    expect(committed.radius).toBeGreaterThan(1);
+    expect(previewWidth).toBeCloseTo(committed.radius * 2);
+  });
+
+  it("draws a normalized rectangle by dragging corner to corner", () => {
+    const onAdd = vi.fn();
+    render(
+      <MediaFigure
+        src="/photo.jpg"
+        annotationEditing={{ tool: "rectangle", color: "BLUE", onAdd }}
+      />,
+    );
+    const editor = getEditor();
+    firePointer("pointerdown", editor, 40, 30);
+    firePointer("pointermove", editor, 240, 180);
+    firePointer("pointerup", editor);
+    expect(onAdd).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "rectangle",
+        x1: 10,
+        y1: 10,
+        x2: 60,
+        y2: 60,
+        color: "BLUE",
+      }),
+    );
+  });
+
+  it("selects an annotation on click and clears selection on empty space", () => {
+    const onSelect = vi.fn();
+    render(
+      <MediaFigure
+        src="/photo.jpg"
+        annotations={[{ id: "p1", type: "point", x: 50, y: 50, title: "Pin" }]}
+        annotationEditing={{ tool: "select", color: "GREY", selectedId: null, onSelect }}
+      />,
+    );
+    firePointer("pointerdown", screen.getByRole("img", { name: "Pin" }), 200, 150);
+    expect(onSelect).toHaveBeenCalledWith("p1");
+
+    onSelect.mockClear();
+    firePointer("pointerdown", getEditor(), 10, 10);
+    expect(onSelect).toHaveBeenCalledWith(null);
+  });
+
+  it("moves a selected annotation by dragging its body", () => {
+    const onChange = vi.fn();
+    render(
+      <MediaFigure
+        src="/photo.jpg"
+        annotations={[{ id: "p1", type: "point", x: 50, y: 50, title: "Pin" }]}
+        annotationEditing={{ tool: "select", color: "GREY", selectedId: "p1", onChange }}
+      />,
+    );
+    firePointer("pointerdown", screen.getByRole("img", { name: "Pin" }), 200, 150);
+    const editor = getEditor();
+    firePointer("pointermove", editor, 240, 150);
+    firePointer("pointerup", editor);
+    expect(onChange).toHaveBeenCalledWith(
+      "p1",
+      expect.objectContaining({ x: 60, y: 50 }),
+    );
+  });
+
+  it("resizes a circle by dragging its handle", () => {
+    const onChange = vi.fn();
+    const { container } = render(
+      <MediaFigure
+        src="/photo.jpg"
+        annotations={[{ id: "c1", type: "circle", x: 50, y: 50, radius: 10, title: "Zone" }]}
+        annotationEditing={{ tool: "select", color: "GREY", selectedId: "c1", onChange }}
+      />,
+    );
+    const handle = container.querySelector(".annotation-handle");
+    expect(handle).not.toBeNull();
+    firePointer("pointerdown", handle!, 240, 150);
+    const editor = getEditor();
+    firePointer("pointermove", editor, 280, 150);
+    firePointer("pointerup", editor);
+    expect(onChange).toHaveBeenCalledWith(
+      "c1",
+      expect.objectContaining({ type: "circle", radius: 20 }),
+    );
+  });
+
+  it("removes the selected annotation on Delete", () => {
+    const onRemove = vi.fn();
+    render(
+      <MediaFigure
+        src="/photo.jpg"
+        annotations={[{ id: "p1", type: "point", x: 50, y: 50, title: "Pin" }]}
+        annotationEditing={{ tool: "select", color: "GREY", selectedId: "p1", onRemove }}
+      />,
+    );
+    fireEvent.keyDown(getEditor(), { key: "Delete" });
+    expect(onRemove).toHaveBeenCalledWith("p1");
+  });
+});

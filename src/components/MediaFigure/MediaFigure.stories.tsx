@@ -1,5 +1,11 @@
+import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { MediaFigure } from "./MediaFigure";
+import { COLORS, type GuideColor } from "../../types/colors";
+import {
+  MediaFigure,
+  type AnnotationTool,
+  type MediaAnnotation,
+} from "./MediaFigure";
 
 const componentDocs = `An instructional image or video with overlaid annotations.
 \`MediaFigure\` is the visual heart of a step — it shows *what* to do and points at
@@ -43,7 +49,19 @@ Every annotation also accepts:
 - \`id\` — a stable key (falls back to the array index).
 
 Only \`point\` markers display a \`label\`. Circles and rectangles are outlines
-that highlight a region.`;
+that highlight a region.
+
+## Editing
+
+Pass \`annotationEditing\` to turn the figure into an interactive annotation canvas
+(the lightbox is disabled while editing). It is a controlled, callback-driven
+affordance: the consumer owns the active \`tool\`, the \`color\` for new shapes, the
+\`selectedId\`, and persistence. With a drawing tool, click to drop a \`point\` or drag
+to draw a \`circle\` / \`rectangle\`; with \`select\`, click a marker to select it, drag its
+body to move, drag the handles to resize, and press \`Delete\` to remove it. The library
+computes all frame-percentage geometry and reports intent through \`onAdd\`, \`onChange\`,
+\`onRemove\`, and \`onSelect\` — it performs no tool, color-picker, or persistence logic
+(see the authoring tool's annotation modal for that chrome).`;
 
 const meta = {
   title: "Guide/MediaFigure",
@@ -245,4 +263,99 @@ export const DisplayRegion: Story = {
       <MediaFigure {...args} />
     </div>
   ),
+};
+
+const TOOLS: AnnotationTool[] = ["select", "point", "circle", "rectangle"];
+const PALETTE = Object.keys(COLORS) as GuideColor[];
+
+export const AnnotationEditor: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "An interactive editor driven by `annotationEditing`. Pick a tool and color, then click or drag on the image to draw. Switch to `select` to move a marker, drag its handles to resize, or press `Delete` to remove the selected one. The toolbar and color swatches here are the consumer's responsibility — the figure only reports geometry.",
+      },
+    },
+  },
+  render: function AnnotationEditorStory(args) {
+    const [tool, setTool] = useState<AnnotationTool>("point");
+    const [color, setColor] = useState<GuideColor>("RED");
+    const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [seq, setSeq] = useState(1);
+    const [annotations, setAnnotations] = useState<MediaAnnotation[]>([]);
+
+    return (
+      <div className="flex max-w-xl flex-col gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          {TOOLS.map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => setTool(option)}
+              aria-pressed={tool === option}
+              className={`rounded-md border px-2.5 py-1 text-sm capitalize transition ${
+                tool === option
+                  ? "border-accent bg-accent text-accent-foreground"
+                  : "border-default hover:border-accent"
+              }`}
+            >
+              {option}
+            </button>
+          ))}
+          <span className="mx-1 h-5 w-px bg-default" />
+          {PALETTE.map((option) => (
+            <button
+              key={option}
+              type="button"
+              aria-label={option}
+              aria-pressed={color === option}
+              onClick={() => {
+                setColor(option);
+                if (selectedId) {
+                  setAnnotations((prev) =>
+                    prev.map((a) =>
+                      a.id === selectedId ? { ...a, color: option } : a,
+                    ),
+                  );
+                }
+              }}
+              className={`size-5 rounded-full transition ${
+                color === option ? "ring-2 ring-accent ring-offset-2" : ""
+              }`}
+              style={{ backgroundColor: COLORS[option] }}
+            />
+          ))}
+        </div>
+        <MediaFigure
+          {...args}
+          annotations={annotations}
+          annotationEditing={{
+            tool,
+            color,
+            selectedId,
+            onSelect: setSelectedId,
+            onAdd: (annotation) => {
+              const id = `a${seq}`;
+              const next: MediaAnnotation =
+                annotation.type === "point"
+                  ? { ...annotation, id, label: seq }
+                  : { ...annotation, id };
+              setSeq((value) => value + 1);
+              setAnnotations((prev) => [...prev, next]);
+              setSelectedId(id);
+              setTool("select");
+            },
+            onChange: (id, annotation) =>
+              setAnnotations((prev) =>
+                prev.map((a) => (a.id === id ? { ...annotation, id } : a)),
+              ),
+            onRemove: (id) => {
+              setAnnotations((prev) => prev.filter((a) => a.id !== id));
+              setSelectedId(null);
+            },
+          }}
+        />
+      </div>
+    );
+  },
 };

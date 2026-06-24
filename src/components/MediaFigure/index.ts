@@ -11,3 +11,5 @@ export type {
 } from "./MediaFigure";
 export { MediaFigureThumbnail } from "./MediaFigureThumbnail";
 export type { MediaFigureThumbnailProps } from "./MediaFigureThumbnail";
+export { MediaCropEditor } from "./MediaCropEditor";
+export type { MediaCropEditorProps } from "./MediaCropEditor";

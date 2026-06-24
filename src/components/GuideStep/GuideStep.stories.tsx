@@ -362,7 +362,7 @@ export const EditingAffordances: Story = {
     docs: {
       description: {
         story:
-          "Optional, editor-only affordances. Passing `mediaEditing` turns the media area into an editor (empty add target, click-to-annotate, a remove control per thumbnail, drag-to-reorder thumbnails, and a \"+\" tile). Passing `editing` to `GuideStep.Bullets` manages the bullet list — drag a bullet's grip to reorder, remove with the x, or append with \"+ New bullet\". Passing `onMarkerPress` on a bullet turns its marker into a button — here it cycles the dot color. These are off by default, so the reader output is unchanged.",
+          "Optional, editor-only affordances. Passing `mediaEditing` turns the media area into an editor (empty add target, an \"Edit annotations\" / \"Adjust crop\" overlay on the main image, a remove control per thumbnail, drag-to-reorder thumbnails, and a \"+\" tile). Passing `editing` to `GuideStep.Bullets` manages the bullet list — drag a bullet's grip to reorder, remove with the x, or append with \"+ New bullet\". Passing `onMarkerPress` on a bullet turns its marker into a button — here it cycles the dot color. These are off by default, so the reader output is unchanged.",
       },
     },
   },
@@ -381,6 +381,7 @@ export const EditingAffordances: Story = {
     ]);
     const [active, setActive] = useState(0);
     const [annotatingIndex, setAnnotatingIndex] = useState<number | null>(null);
+    const [croppingIndex, setCroppingIndex] = useState<number | null>(null);
     const [colorIndex, setColorIndex] = useState(0);
     const [seq, setSeq] = useState(2);
     const [bullets, setBullets] = useState([
@@ -403,6 +404,7 @@ export const EditingAffordances: Story = {
             onSelectImage: setActive,
             onAddImage: () => setImages((prev) => [...prev, nextImage()]),
             onEditAnnotations: (index) => setAnnotatingIndex(index),
+            onEditCrop: (index) => setCroppingIndex(index),
             onRemoveImage: (index) =>
               setImages((prev) => prev.filter((_, i) => i !== index)),
             onReorderImage: (from, to) =>
@@ -463,6 +465,13 @@ export const EditingAffordances: Story = {
             Editing annotations for image {annotatingIndex + 1}. In a real editor this
             opens the annotation modal; see <code>Guide/MediaFigure</code> for the
             interactive canvas.
+          </p>
+        )}
+        {croppingIndex !== null && (
+          <p className="mt-3 text-sm text-default-500">
+            Adjusting the crop for image {croppingIndex + 1}. In a real editor this
+            opens the crop modal; see <code>Guide/MediaCropEditor</code> for the
+            interactive tool.
           </p>
         )}
       </div>

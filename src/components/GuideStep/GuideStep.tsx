@@ -30,16 +30,22 @@ const COMPLETE_CHECKBOX_GREEN = "#0B7A47";
 
 /**
  * Optional, editor-only media affordances. Presence switches `GuideStep.Media`
- * into edit mode: an empty-state add target, click-to-annotate on the main image,
- * a remove control per thumbnail, a "+" tile to append, and (with `onReorderImage`)
- * drag-to-reorder thumbnails. All members are intent callbacks — the library
- * performs no file or menu logic. Omit entirely for the read-only reader experience.
+ * into edit mode: an empty-state add target, an "Edit annotations" / "Adjust crop"
+ * overlay on the main image, a remove control per thumbnail, a "+" tile to append,
+ * and (with `onReorderImage`) drag-to-reorder thumbnails. All members are intent
+ * callbacks — the library performs no file or menu logic. Omit entirely for the
+ * read-only reader experience.
  */
 export interface GuideStepMediaEditing {
   /** Append a new image (e.g. open a file picker). Drives the empty target and "+" tile. */
   onAddImage?: () => void;
-  /** Edit annotations for the image at `index` (fired by clicking the main image). */
+  /** Edit annotations for the image at `index` (fired from the main image overlay). */
   onEditAnnotations?: (index: number) => void;
+  /**
+   * Adjust the crop / display region for the image at `index`. When set, an
+   * "Adjust crop" action appears in the main image overlay beside "Edit annotations".
+   */
+  onEditCrop?: (index: number) => void;
   /** Remove the image at `index` (fired by a thumbnail's remove control). */
   onRemoveImage?: (index: number) => void;
   /**
@@ -250,6 +256,23 @@ function PencilIcon() {
       className="size-4"
     >
       <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+    </svg>
+  );
+}
+
+function CropIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="size-4"
+    >
+      <path d="M6 2v14a2 2 0 0 0 2 2h14M2 6h14a2 2 0 0 1 2 2v14" />
     </svg>
   );
 }
@@ -639,14 +662,26 @@ function GuideStepBody({
                 className: cn("w-full", active.props.className),
                 zoomable: false,
               })}
-              <button
-                type="button"
-                onClick={() => mediaEditing?.onEditAnnotations?.(activeIndex)}
-                className="absolute inset-0 flex items-center justify-center gap-2 rounded-lg text-sm font-semibold text-background opacity-0 transition hover:bg-foreground/40 hover:opacity-100 focus-visible:bg-foreground/40 focus-visible:opacity-100 focus-visible:outline-none"
-              >
-                <PencilIcon />
-                Edit annotations
-              </button>
+              <div className="absolute inset-0 flex items-center justify-center gap-2 rounded-lg opacity-0 transition group-hover:bg-foreground/40 group-hover:opacity-100 focus-within:bg-foreground/40 focus-within:opacity-100">
+                <button
+                  type="button"
+                  onClick={() => mediaEditing?.onEditAnnotations?.(activeIndex)}
+                  className="flex items-center gap-1.5 rounded-md bg-background/90 px-2.5 py-1.5 text-sm font-semibold text-foreground shadow transition hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                >
+                  <PencilIcon />
+                  Edit annotations
+                </button>
+                {mediaEditing?.onEditCrop && (
+                  <button
+                    type="button"
+                    onClick={() => mediaEditing?.onEditCrop?.(activeIndex)}
+                    className="flex items-center gap-1.5 rounded-md bg-background/90 px-2.5 py-1.5 text-sm font-semibold text-foreground shadow transition hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  >
+                    <CropIcon />
+                    Adjust crop
+                  </button>
+                )}
+              </div>
             </div>
           ) : (
             cloneElement(active, {

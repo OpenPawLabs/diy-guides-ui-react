@@ -19,10 +19,15 @@ export type {
 export { Callout } from "./components/Callout";
 export type { CalloutProps } from "./components/Callout";
 
-export { MediaFigure, MediaFigureThumbnail } from "./components/MediaFigure";
+export {
+  MediaFigure,
+  MediaFigureThumbnail,
+  MediaCropEditor,
+} from "./components/MediaFigure";
 export type {
   MediaFigureProps,
   MediaFigureThumbnailProps,
+  MediaCropEditorProps,
   MediaAnnotation,
   MediaAnnotationEditing,
   AnnotationTool,
@@ -34,7 +39,10 @@ export type {
 
 export {
   DISPLAY_REGION_ASPECT,
+  MIN_REGION_WIDTH,
   displayRegionHeight,
+  centeredDisplayRegion,
+  clampDisplayRegion,
 } from "./utils/mediaCrop";
 
 export { ToolList } from "./components/ToolList";

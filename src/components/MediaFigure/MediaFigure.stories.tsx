@@ -20,7 +20,8 @@ figure itself.
   layout. Non-4:3 uploads are center-cropped to fit.
 - \`displayRegion\` — optional \`{ x, y, width }\` in **source pixels** for an exact
   4:3 crop or zoom without re-encoding the image. Height is always
-  \`round(width × 3 / 4)\`.
+  \`round(width × 3 / 4)\`. Authoring tools can set it visually with the sibling
+  \`MediaCropEditor\` (see \`Guide/MediaCropEditor\`).
 - \`zoomable\` — image figures open the full-size source in a modal lightbox on
   click (default \`true\`). It applies only to \`type="image"\`; set it to \`false\`
   in editing contexts where the click drives another action (\`GuideStep\` does this
@@ -61,7 +62,12 @@ to draw a \`circle\` / \`rectangle\`; with \`select\`, click a marker to select 
 body to move, drag the handles to resize, and press \`Delete\` to remove it. The library
 computes all frame-percentage geometry and reports intent through \`onAdd\`, \`onChange\`,
 \`onRemove\`, and \`onSelect\` — it performs no tool, color-picker, or persistence logic
-(see the authoring tool's annotation modal for that chrome).`;
+(see the authoring tool's annotation modal for that chrome).
+
+Annotations are positioned in frame percentages, **independent of \`displayRegion\`**,
+so the crop is a separate concern with its own tool. To pick a \`displayRegion\`
+visually, use the sibling \`MediaCropEditor\` (see \`Guide/MediaCropEditor\`), which
+reports the region in source pixels.`;
 
 const meta = {
   title: "Guide/MediaFigure",

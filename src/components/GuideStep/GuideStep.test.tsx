@@ -391,6 +391,37 @@ describe("GuideStep editing affordances", () => {
     expect(onEditAnnotations).toHaveBeenCalled();
   });
 
+  it("shows an Adjust crop action only when onEditCrop is provided", async () => {
+    const user = userEvent.setup();
+    const onEditCrop = vi.fn();
+    const { rerender } = render(
+      <GuideStep number={1} title="Crop" completable={false} mediaEditing={{}}>
+        <GuideStep.Media>
+          <MediaFigure src="https://placehold.co/800x600/png?text=Image+1" />
+        </GuideStep.Media>
+        <GuideStep.Bullets>
+          <GuideStep.Bullet>Frame the subject.</GuideStep.Bullet>
+        </GuideStep.Bullets>
+      </GuideStep>,
+    );
+    expect(
+      screen.queryByRole("button", { name: "Adjust crop" }),
+    ).not.toBeInTheDocument();
+
+    rerender(
+      <GuideStep number={1} title="Crop" completable={false} mediaEditing={{ onEditCrop }}>
+        <GuideStep.Media>
+          <MediaFigure src="https://placehold.co/800x600/png?text=Image+1" />
+        </GuideStep.Media>
+        <GuideStep.Bullets>
+          <GuideStep.Bullet>Frame the subject.</GuideStep.Bullet>
+        </GuideStep.Bullets>
+      </GuideStep>,
+    );
+    await user.click(screen.getByRole("button", { name: "Adjust crop" }));
+    expect(onEditCrop).toHaveBeenCalledWith(0);
+  });
+
   it("reorders thumbnails via drag and drop when onReorderImage is set", () => {
     const onReorderImage = vi.fn();
     render(

@@ -229,3 +229,132 @@ describe("GuideStep", () => {
     );
   });
 });
+
+describe("GuideStep editing affordances", () => {
+  it("renders a plain marker by default and a marker button when onMarkerPress is set", async () => {
+    const user = userEvent.setup();
+    const onMarkerPress = vi.fn();
+    const { rerender, container } = render(
+      <GuideStep.Bullets>
+        <GuideStep.Bullet color="RED">Edit me.</GuideStep.Bullet>
+      </GuideStep.Bullets>,
+    );
+    expect(
+      screen.queryByRole("button", { name: "Change bullet style" }),
+    ).not.toBeInTheDocument();
+    expect(container.querySelector("span[aria-hidden='true']")).not.toBeNull();
+
+    rerender(
+      <GuideStep.Bullets>
+        <GuideStep.Bullet color="RED" onMarkerPress={onMarkerPress}>
+          Edit me.
+        </GuideStep.Bullet>
+      </GuideStep.Bullets>,
+    );
+    const marker = screen.getByRole("button", { name: "Change bullet style" });
+    expect(marker).toHaveStyle({ backgroundColor: COLORS.RED });
+    await user.click(marker);
+    expect(onMarkerPress).toHaveBeenCalledTimes(1);
+  });
+
+  it("makes the semantic bullet icon pressable when onMarkerPress is set", async () => {
+    const user = userEvent.setup();
+    const onMarkerPress = vi.fn();
+    render(
+      <GuideStep.Bullets>
+        <GuideStep.Bullet variant="note" onMarkerPress={onMarkerPress}>
+          Note body.
+        </GuideStep.Bullet>
+      </GuideStep.Bullets>,
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Change bullet style" }),
+    );
+    expect(onMarkerPress).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows an add-image target and fires onAddImage when media is empty", async () => {
+    const user = userEvent.setup();
+    const onAddImage = vi.fn();
+    render(
+      <GuideStep
+        number={1}
+        title="New step"
+        completable={false}
+        mediaEditing={{ onAddImage }}
+      >
+        <GuideStep.Media />
+        <GuideStep.Bullets>
+          <GuideStep.Bullet>Instruction.</GuideStep.Bullet>
+        </GuideStep.Bullets>
+      </GuideStep>,
+    );
+    await user.click(screen.getByRole("button", { name: /add image/i }));
+    expect(onAddImage).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not warn about missing media when mediaEditing is active", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    render(
+      <GuideStep
+        number={1}
+        title="New step"
+        completable={false}
+        mediaEditing={{ onAddImage: () => {} }}
+      >
+        <GuideStep.Media />
+        <GuideStep.Bullets>
+          <GuideStep.Bullet>Instruction.</GuideStep.Bullet>
+        </GuideStep.Bullets>
+      </GuideStep>,
+    );
+    expect(warn).not.toHaveBeenCalledWith(
+      "GuideStep requires at least one MediaFigure inside GuideStep.Media.",
+    );
+    warn.mockRestore();
+  });
+
+  it("supports select, replace, remove, and add affordances with images present", async () => {
+    const user = userEvent.setup();
+    const onSelectImage = vi.fn();
+    const onReplaceImage = vi.fn();
+    const onRemoveImage = vi.fn();
+    const onAddImage = vi.fn();
+    render(
+      <GuideStep
+        number={1}
+        title="Gallery"
+        completable={false}
+        mediaEditing={{
+          onSelectImage,
+          onReplaceImage,
+          onRemoveImage,
+          onAddImage,
+        }}
+      >
+        <GuideStep.Media>
+          <MediaFigure src="https://placehold.co/800x600/png?text=Image+1" />
+          <MediaFigure src="https://placehold.co/800x600/png?text=Image+2" />
+        </GuideStep.Media>
+        <GuideStep.Bullets>
+          <GuideStep.Bullet>Follow both views.</GuideStep.Bullet>
+        </GuideStep.Bullets>
+      </GuideStep>,
+    );
+
+    const gallery = screen.getByRole("group", { name: "Step images" });
+    await user.click(within(gallery).getByRole("button", { name: "Image 2" }));
+    expect(onSelectImage).toHaveBeenCalledWith(1);
+
+    await user.click(
+      within(gallery).getByRole("button", { name: "Remove image 1" }),
+    );
+    expect(onRemoveImage).toHaveBeenCalledWith(0);
+
+    await user.click(within(gallery).getByRole("button", { name: "Add image" }));
+    expect(onAddImage).toHaveBeenCalledTimes(1);
+
+    await user.click(screen.getByRole("button", { name: "Replace image" }));
+    expect(onReplaceImage).toHaveBeenCalled();
+  });
+});

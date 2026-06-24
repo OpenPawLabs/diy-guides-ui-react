@@ -24,6 +24,28 @@ const COMPLETE_BUTTON_BG_HOVER = "#34B07A";
 /** Dark green accent for the checkbox control when a step is marked complete. */
 const COMPLETE_CHECKBOX_GREEN = "#0B7A47";
 
+/**
+ * Optional, editor-only media affordances. Presence switches `GuideStep.Media`
+ * into edit mode: an empty-state add target, click-to-replace on the main image,
+ * a remove control per thumbnail, and a "+" tile to append. All members are
+ * intent callbacks — the library performs no file or menu logic. Omit entirely
+ * for the read-only reader experience.
+ */
+export interface GuideStepMediaEditing {
+  /** Append a new image (e.g. open a file picker). Drives the empty target and "+" tile. */
+  onAddImage?: () => void;
+  /** Replace the image at `index` (fired by clicking the main image). */
+  onReplaceImage?: (index: number) => void;
+  /** Remove the image at `index` (fired by a thumbnail's remove control). */
+  onRemoveImage?: (index: number) => void;
+  /** Selection changed to `index` (in edit mode thumbnails select on click). */
+  onSelectImage?: (index: number) => void;
+  /** Controlled active image index. */
+  activeIndex?: number;
+  /** Show the "+" add tile while below the three-image limit. @default true */
+  canAddImage?: boolean;
+}
+
 export interface GuideStepProps {
   /** Step number shown in the badge. Auto-assigned when inside `GuideStepList`. */
   number?: number;
@@ -37,6 +59,11 @@ export interface GuideStepProps {
   onCompletedChange?: (completed: boolean) => void;
   /** Render the "mark complete" checkbox. @default true */
   completable?: boolean;
+  /**
+   * Editor-only media affordances. When provided, the media area becomes
+   * editable (add / replace / remove / select). Leave undefined for readers.
+   */
+  mediaEditing?: GuideStepMediaEditing;
   /** Step body — requires `GuideStep.Media` (≥1 image) and `GuideStep.Bullets` (≥1 bullet). */
   children?: ReactNode;
   className?: string;
@@ -58,6 +85,13 @@ export interface GuideStepBulletProps {
   label?: ReactNode;
   /** Hide the auto-generated label for `caution`, `reminder`, and `note` bullets. */
   hideLabel?: boolean;
+  /**
+   * Editor-only: when set, the marker (dot or semantic icon) renders as a button
+   * that fires this on press — e.g. to open a color / variant picker. Omit for readers.
+   */
+  onMarkerPress?: () => void;
+  /** Accessible label for the marker button when `onMarkerPress` is set. */
+  markerAriaLabel?: string;
   children: ReactNode;
   className?: string;
 }
@@ -123,6 +157,40 @@ function ReminderIcon() {
   );
 }
 
+function UploadIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="size-7"
+    >
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+    </svg>
+  );
+}
+
+function RemoveIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="size-3"
+    >
+      <path d="M18 6 6 18M6 6l12 12" />
+    </svg>
+  );
+}
+
 function isMediaFigure(
   node: ReactNode,
 ): node is ReactElement<MediaFigureProps> {
@@ -141,7 +209,7 @@ function countBullets(bulletsNode: ReactNode): number {
     .length;
 }
 
-function extractStepParts(children: ReactNode) {
+function extractStepParts(children: ReactNode, allowEmptyMedia = false) {
   let mediaChildren: ReactNode = null;
   let bullets: ReactNode = null;
 
@@ -159,7 +227,7 @@ function extractStepParts(children: ReactNode) {
   const bulletCount = countBullets(bullets);
 
   if (import.meta.env.DEV) {
-    if (figures.length === 0) {
+    if (figures.length === 0 && !allowEmptyMedia) {
       console.warn(
         "GuideStep requires at least one MediaFigure inside GuideStep.Media.",
       );
@@ -206,17 +274,29 @@ function GuideStepBullet({
   color = "GREY",
   label,
   hideLabel = false,
+  onMarkerPress,
+  markerAriaLabel,
   children,
   className,
 }: GuideStepBulletProps) {
   if (variant === "dot") {
     return (
       <li className={cn("flex gap-2.5", className)}>
-        <span
-          aria-hidden="true"
-          className="mt-1.5 size-2 shrink-0 rounded-full"
-          style={{ backgroundColor: COLORS[color] }}
-        />
+        {onMarkerPress ? (
+          <button
+            type="button"
+            onClick={onMarkerPress}
+            aria-label={markerAriaLabel ?? "Change bullet style"}
+            className="mt-1.5 size-2 shrink-0 cursor-pointer rounded-full outline-none transition hover:ring-2 hover:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+            style={{ backgroundColor: COLORS[color] }}
+          />
+        ) : (
+          <span
+            aria-hidden="true"
+            className="mt-1.5 size-2 shrink-0 rounded-full"
+            style={{ backgroundColor: COLORS[color] }}
+          />
+        )}
         <span className="flex-1">{children}</span>
       </li>
     );
@@ -240,7 +320,18 @@ function GuideStepBullet({
         className,
       )}
     >
-      {icon}
+      {onMarkerPress ? (
+        <button
+          type="button"
+          onClick={onMarkerPress}
+          aria-label={markerAriaLabel ?? "Change bullet style"}
+          className="shrink-0 cursor-pointer rounded outline-none transition hover:opacity-70 focus-visible:ring-2 focus-visible:ring-accent"
+        >
+          {icon}
+        </button>
+      ) : (
+        icon
+      )}
       <span className="flex-1">
         {!hideLabel && (
           <>
@@ -273,51 +364,149 @@ function StepCheck() {
 function GuideStepBody({
   figures,
   bullets,
+  mediaEditing,
 }: {
   figures: ReactElement<MediaFigureProps>[];
   bullets: ReactNode;
+  mediaEditing?: GuideStepMediaEditing;
 }) {
-  const [activeIndex, setActiveIndex] = useState(0);
+  const editing = mediaEditing != null;
+  const [internalActive, setInternalActive] = useState(0);
+  const activeIndex = mediaEditing?.activeIndex ?? internalActive;
   const active = figures[activeIndex] ?? figures[0];
+
+  const setActive = (index: number) => {
+    setInternalActive(index);
+    mediaEditing?.onSelectImage?.(index);
+  };
+
+  const canAdd =
+    editing &&
+    (mediaEditing?.canAddImage ?? true) &&
+    figures.length >= 1 &&
+    figures.length < MAX_STEP_IMAGES;
+  const showThumbs = editing ? figures.length >= 1 : figures.length > 1;
 
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
       <div className="min-w-0">
-        {active &&
-          cloneElement(active, {
-            className: cn("w-full", active.props.className),
-          })}
+        {active ? (
+          editing ? (
+            <div className="group relative">
+              {cloneElement(active, {
+                className: cn("w-full", active.props.className),
+              })}
+              <button
+                type="button"
+                onClick={() => mediaEditing?.onReplaceImage?.(activeIndex)}
+                className="absolute inset-0 flex items-center justify-center rounded-lg text-sm font-semibold text-background opacity-0 transition hover:bg-foreground/40 hover:opacity-100 focus-visible:bg-foreground/40 focus-visible:opacity-100 focus-visible:outline-none"
+              >
+                Replace image
+              </button>
+            </div>
+          ) : (
+            cloneElement(active, {
+              className: cn("w-full", active.props.className),
+            })
+          )
+        ) : (
+          editing && (
+            <button
+              type="button"
+              onClick={() => mediaEditing?.onAddImage?.()}
+              className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-default bg-default-soft text-default-500 transition hover:border-accent hover:text-accent focus-visible:border-accent focus-visible:text-accent focus-visible:outline-none"
+            >
+              <UploadIcon />
+              <span className="text-sm font-medium">Add image</span>
+            </button>
+          )
+        )}
       </div>
 
       <div className="flex min-w-0 flex-col gap-4">
-        {figures.length > 1 && (
+        {(showThumbs || canAdd) && (
           <div
             className="flex flex-wrap gap-2"
             role="group"
             aria-label="Step images"
           >
-            {figures.map((figure, index) => (
+            {figures.map((figure, index) =>
+              editing ? (
+                <div
+                  key={figure.key ?? figure.props.src ?? index}
+                  className="relative"
+                >
+                  <button
+                    type="button"
+                    className={cn(
+                      "block overflow-hidden rounded-md border-2 transition-[box-shadow,opacity,border-color]",
+                      index === activeIndex
+                        ? "border-accent shadow-md"
+                        : "border-default opacity-80 hover:opacity-100",
+                    )}
+                    onClick={() => setActive(index)}
+                    aria-label={`Image ${index + 1}`}
+                    aria-pressed={index === activeIndex}
+                  >
+                    <img
+                      src={figure.props.src}
+                      alt=""
+                      className="size-16 object-cover sm:size-20"
+                    />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => mediaEditing?.onRemoveImage?.(index)}
+                    aria-label={`Remove image ${index + 1}`}
+                    className="absolute -right-1.5 -top-1.5 flex size-5 items-center justify-center rounded-full bg-foreground text-background shadow transition hover:bg-danger focus-visible:bg-danger focus-visible:outline-none"
+                  >
+                    <RemoveIcon />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  key={figure.key ?? figure.props.src ?? index}
+                  type="button"
+                  className={cn(
+                    "overflow-hidden rounded-md border-2 transition-[box-shadow,opacity,border-color]",
+                    index === activeIndex
+                      ? "border-accent shadow-md"
+                      : "border-default opacity-80 hover:opacity-100",
+                  )}
+                  onMouseEnter={() => setActive(index)}
+                  onFocus={() => setActive(index)}
+                  aria-label={`Image ${index + 1}`}
+                  aria-pressed={index === activeIndex}
+                >
+                  <img
+                    src={figure.props.src}
+                    alt=""
+                    className="size-16 object-cover sm:size-20"
+                  />
+                </button>
+              ),
+            )}
+            {canAdd && (
               <button
-                key={figure.key ?? figure.props.src ?? index}
                 type="button"
-                className={cn(
-                  "overflow-hidden rounded-md border-2 transition-[box-shadow,opacity,border-color]",
-                  index === activeIndex
-                    ? "border-accent shadow-md"
-                    : "border-default opacity-80 hover:opacity-100",
-                )}
-                onMouseEnter={() => setActiveIndex(index)}
-                onFocus={() => setActiveIndex(index)}
-                aria-label={`Image ${index + 1}`}
-                aria-pressed={index === activeIndex}
+                onClick={() => mediaEditing?.onAddImage?.()}
+                aria-label="Add image"
+                className="flex size-16 items-center justify-center rounded-md border-2 border-dashed border-default text-default-500 transition hover:border-accent hover:text-accent focus-visible:border-accent focus-visible:text-accent focus-visible:outline-none sm:size-20"
               >
-                <img
-                  src={figure.props.src}
-                  alt=""
-                  className="size-16 object-cover sm:size-20"
-                />
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="size-6"
+                >
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
               </button>
-            ))}
+            )}
           </div>
         )}
         {bullets}
@@ -333,6 +522,7 @@ function GuideStepRoot({
   defaultCompleted = false,
   onCompletedChange,
   completable = true,
+  mediaEditing,
   children,
   className,
 }: GuideStepProps) {
@@ -342,7 +532,7 @@ function GuideStepRoot({
     onCompletedChange,
   );
   const titleId = useId();
-  const { figures, bullets } = extractStepParts(children);
+  const { figures, bullets } = extractStepParts(children, mediaEditing != null);
 
   return (
     <section
@@ -414,7 +604,11 @@ function GuideStepRoot({
         )}
       </header>
 
-      <GuideStepBody figures={figures} bullets={bullets} />
+      <GuideStepBody
+        figures={figures}
+        bullets={bullets}
+        mediaEditing={mediaEditing}
+      />
     </section>
   );
 }

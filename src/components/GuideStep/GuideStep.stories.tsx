@@ -1,6 +1,8 @@
+import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { GuideStep } from "./GuideStep";
 import { MediaFigure } from "../MediaFigure";
+import type { GuideColor } from "../../types/colors";
 
 const componentDocs = `A single numbered step: a header (number badge, title, and an optional
 "mark complete" checkbox) above a two-column body — the main image on the left,
@@ -49,7 +51,16 @@ Override the auto label with \`label\`, or hide it with \`hideLabel\`.
 A step tracks whether it is done. Use it uncontrolled with \`defaultCompleted\`, or
 control it with \`isCompleted\` + \`onCompletedChange\`. Hide the checkbox with
 \`completable={false}\`. Inside \`GuideStepList\` completion is managed for you — see
-that component.`;
+that component.
+
+## Editing affordances
+
+\`GuideStep\` is presentational by default. Two optional, off-by-default props let an
+external editor drive it without changing reader output. Pass \`mediaEditing\` to make
+the media area editable — an empty add target, click-to-replace on the main image, a
+remove control per thumbnail, and a "+" tile to append (up to three). Pass
+\`onMarkerPress\` on a \`GuideStep.Bullet\` to turn its marker into a button, e.g. to open
+a color or variant picker. See the "Editing affordances" story.`;
 
 const meta = {
   title: "Guide/GuideStep",
@@ -242,6 +253,79 @@ export const Completed: Story = {
       </GuideStep>
     </div>
   ),
+};
+
+export const EditingAffordances: Story = {
+  name: "Editing affordances",
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Optional, editor-only affordances. Passing `mediaEditing` turns the media area into an editor (empty add target, click-to-replace, a remove control per thumbnail, and a \"+\" tile). Passing `onMarkerPress` on a bullet turns its marker into a button — here it cycles the dot color. These are off by default, so the reader output is unchanged.",
+      },
+    },
+  },
+  args: { number: 1, title: "Document each layer", completable: false },
+  render: function EditingAffordancesStory(args) {
+    const palette: GuideColor[] = [
+      "GREY",
+      "RED",
+      "ORANGE",
+      "GREEN",
+      "BLUE",
+      "MAGENTA",
+    ];
+    const [images, setImages] = useState<string[]>([
+      "https://placehold.co/800x600/e2e8f0/1e293b/png?text=Overview",
+    ]);
+    const [active, setActive] = useState(0);
+    const [colorIndex, setColorIndex] = useState(0);
+    const [seq, setSeq] = useState(2);
+    const nextImage = () => {
+      const src = `https://placehold.co/800x600/dbeafe/1e40af/png?text=Image+${seq}`;
+      setSeq((value) => value + 1);
+      return src;
+    };
+
+    return (
+      <div className="max-w-4xl">
+        <GuideStep
+          {...args}
+          mediaEditing={{
+            activeIndex: Math.min(active, Math.max(images.length - 1, 0)),
+            onSelectImage: setActive,
+            onAddImage: () => setImages((prev) => [...prev, nextImage()]),
+            onReplaceImage: (index) =>
+              setImages((prev) =>
+                prev.map((src, i) => (i === index ? nextImage() : src)),
+              ),
+            onRemoveImage: (index) =>
+              setImages((prev) => prev.filter((_, i) => i !== index)),
+          }}
+        >
+          <GuideStep.Media>
+            {images.map((src, index) => (
+              <MediaFigure key={`${index}-${src}`} src={src} />
+            ))}
+          </GuideStep.Media>
+          <GuideStep.Bullets>
+            <GuideStep.Bullet
+              color={palette[colorIndex]}
+              onMarkerPress={() =>
+                setColorIndex((prev) => (prev + 1) % palette.length)
+              }
+            >
+              Click the dot to cycle its color.
+            </GuideStep.Bullet>
+            <GuideStep.Bullet variant="note">
+              Click a thumbnail to select it, then replace or remove it; use the
+              "+" tile to add more (up to three).
+            </GuideStep.Bullet>
+          </GuideStep.Bullets>
+        </GuideStep>
+      </div>
+    );
+  },
 };
 
 export const WithoutCompletion: Story = {

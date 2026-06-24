@@ -1,2 +1,7 @@
 export { GuideStep } from "./GuideStep";
-export type { GuideStepProps, GuideStepBulletProps, GuideStepBulletVariant } from "./GuideStep";
+export type {
+  GuideStepProps,
+  GuideStepBulletProps,
+  GuideStepBulletVariant,
+  GuideStepMediaEditing,
+} from "./GuideStep";

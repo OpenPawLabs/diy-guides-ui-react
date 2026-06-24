@@ -37,6 +37,7 @@ vi.mock("online-3d-viewer", () => ({
   NavigationMode: { FreeOrbit: 2 },
   Direction: { Z: 3 },
   RGBAColor: vi.fn(function RGBAColor() {}),
+  RGBColor: vi.fn(function RGBColor() {}),
 }));
 
 describe("MediaFigure", () => {

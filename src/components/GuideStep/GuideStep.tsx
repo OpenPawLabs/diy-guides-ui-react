@@ -86,6 +86,33 @@ export type GuideStepBulletVariant =
   | "note"
   | "button";
 
+/**
+ * Optional, editor-only affordances for the bullet list. Passing `editing` to
+ * `GuideStep.Bullets` adds a drag handle to reorder bullets, a remove control per
+ * bullet, and a "+ New bullet" button. Every member is an intent callback — the
+ * library performs no data mutation. Omit entirely for the read-only reader experience.
+ */
+export interface GuideStepBulletsEditing {
+  /** Append a new bullet. Drives the "+ New bullet" button. */
+  onAddBullet?: () => void;
+  /** Remove the bullet at `index`. Hidden while only one bullet remains. */
+  onRemoveBullet?: (index: number) => void;
+  /** Move the bullet from `from` to `to`. When set (and >1 bullet), bullets gain a drag handle. */
+  onReorderBullet?: (from: number, to: number) => void;
+}
+
+/** Internal per-bullet editing descriptor injected by `GuideStep.Bullets` via cloneElement. */
+interface BulletEditDescriptor {
+  canReorder: boolean;
+  isDragging: boolean;
+  isOver: boolean;
+  onRemove?: () => void;
+  onDragStart: () => void;
+  onDragOver: () => void;
+  onDrop: () => void;
+  onDragEnd: () => void;
+}
+
 export interface GuideStepBulletProps {
   /**
    * Bullet style. `dot` renders a colored dot (link to `MediaFigure`
@@ -206,6 +233,24 @@ function RemoveIcon() {
   );
 }
 
+function GripIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className="size-3.5"
+    >
+      <circle cx="9" cy="6" r="1.4" />
+      <circle cx="15" cy="6" r="1.4" />
+      <circle cx="9" cy="12" r="1.4" />
+      <circle cx="15" cy="12" r="1.4" />
+      <circle cx="9" cy="18" r="1.4" />
+      <circle cx="15" cy="18" r="1.4" />
+    </svg>
+  );
+}
+
 function isMediaFigure(
   node: ReactNode,
 ): node is ReactElement<MediaFigureProps> {
@@ -214,7 +259,7 @@ function isMediaFigure(
 
 function isGuideStepBullet(
   node: ReactNode,
-): node is ReactElement<GuideStepBulletProps> {
+): node is ReactElement<GuideStepBulletProps & { __edit?: BulletEditDescriptor }> {
   return isValidElement(node) && node.type === GuideStepBullet;
 }
 
@@ -274,95 +319,137 @@ function GuideStepMedia(_props: { children?: ReactNode }) {
 function GuideStepBullets({
   children,
   className,
+  editing,
 }: {
   children: ReactNode;
   className?: string;
+  /** Editor-only affordances; presence enables reorder / remove / add. Omit for readers. */
+  editing?: GuideStepBulletsEditing;
 }) {
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
+
+  if (!editing) {
+    return <ul className={cn("flex flex-col gap-2", className)}>{children}</ul>;
+  }
+
+  const { onAddBullet, onRemoveBullet, onReorderBullet } = editing;
+  const bullets = Children.toArray(children).filter(isGuideStepBullet);
+  const canReorder = onReorderBullet != null && bullets.length > 1;
+  const canRemove = onRemoveBullet != null && bullets.length > 1;
+
+  const endReorder = () => {
+    setDragIndex(null);
+    setOverIndex(null);
+  };
+
+  const dropOnto = (index: number) => {
+    if (dragIndex != null && dragIndex !== index) {
+      onReorderBullet?.(dragIndex, index);
+    }
+    endReorder();
+  };
+
   return (
-    <ul className={cn("flex flex-col gap-2", className)}>{children}</ul>
+    <ul className={cn("flex flex-col gap-2", className)}>
+      {bullets.map((bullet, index) =>
+        cloneElement(bullet, {
+          key: bullet.key ?? index,
+          __edit: {
+            canReorder,
+            isDragging: dragIndex === index,
+            isOver: overIndex === index && dragIndex !== index,
+            onRemove: canRemove ? () => onRemoveBullet?.(index) : undefined,
+            onDragStart: () => setDragIndex(index),
+            onDragOver: () => setOverIndex(index),
+            onDrop: () => dropOnto(index),
+            onDragEnd: endReorder,
+          },
+        }),
+      )}
+      {onAddBullet && (
+        <li className="list-none">
+          <button
+            type="button"
+            onClick={onAddBullet}
+            className="rounded-md px-1 py-0.5 text-sm font-medium text-default-500 transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            + New bullet
+          </button>
+        </li>
+      )}
+    </ul>
   );
 }
 
 /** A single instruction line — dot bullets or semantic caution / reminder / note bullets. */
-function GuideStepBullet({
-  variant = "dot",
-  color = "GREY",
-  label,
-  hideLabel = false,
-  onMarkerPress,
-  markerAriaLabel,
-  children,
-  className,
-}: GuideStepBulletProps) {
+function GuideStepBullet(props: GuideStepBulletProps) {
+  const {
+    variant = "dot",
+    color = "GREY",
+    label,
+    hideLabel = false,
+    onMarkerPress,
+    markerAriaLabel,
+    children,
+    className,
+  } = props;
+  const edit = (props as { __edit?: BulletEditDescriptor }).__edit;
+  const [grabbing, setGrabbing] = useState(false);
+
+  let marker: ReactNode = null;
+  let body: ReactNode;
+
   if (variant === "dot") {
-    return (
-      <li className={cn("flex gap-2.5", className)}>
-        {onMarkerPress ? (
-          <button
-            type="button"
-            onClick={onMarkerPress}
-            aria-label={markerAriaLabel ?? "Change bullet style"}
-            className="mt-1.5 size-2 shrink-0 cursor-pointer rounded-full outline-none transition hover:ring-2 hover:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
-            style={{ backgroundColor: COLORS[color] }}
-          />
-        ) : (
-          <span
-            aria-hidden="true"
-            className="mt-1.5 size-2 shrink-0 rounded-full"
-            style={{ backgroundColor: COLORS[color] }}
-          />
-        )}
-        <span className="flex-1">{children}</span>
-      </li>
-    );
-  }
-
-  if (variant === "button") {
-    return (
-      <li className={cn("flex items-center gap-2.5", className)}>
-        {onMarkerPress && (
-          <button
-            type="button"
-            onClick={onMarkerPress}
-            aria-label={markerAriaLabel ?? "Change bullet style"}
-            className="size-2 shrink-0 cursor-pointer rounded-full bg-default-300 outline-none transition hover:ring-2 hover:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
-          />
-        )}
-        <div className="min-w-0 flex-1">{children}</div>
-      </li>
-    );
-  }
-
-  const resolvedLabel = label ?? bulletVariantLabel[variant];
-  const icon =
-    variant === "caution" ? (
-      <CautionIcon />
-    ) : variant === "reminder" ? (
-      <ReminderIcon />
+    marker = onMarkerPress ? (
+      <button
+        type="button"
+        onClick={onMarkerPress}
+        aria-label={markerAriaLabel ?? "Change bullet style"}
+        className="mt-1.5 size-2 shrink-0 cursor-pointer rounded-full outline-none transition hover:ring-2 hover:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+        style={{ backgroundColor: COLORS[color] }}
+      />
     ) : (
-      <NoteIcon />
+      <span
+        aria-hidden="true"
+        className="mt-1.5 size-2 shrink-0 rounded-full"
+        style={{ backgroundColor: COLORS[color] }}
+      />
     );
-
-  return (
-    <li
-      className={cn(
-        "flex gap-2.5",
-        variant === "caution" && "text-danger",
-        className,
-      )}
-    >
-      {onMarkerPress ? (
-        <button
-          type="button"
-          onClick={onMarkerPress}
-          aria-label={markerAriaLabel ?? "Change bullet style"}
-          className="shrink-0 cursor-pointer rounded outline-none transition hover:opacity-70 focus-visible:ring-2 focus-visible:ring-accent"
-        >
-          {icon}
-        </button>
+    body = <span className="flex-1">{children}</span>;
+  } else if (variant === "button") {
+    marker = onMarkerPress ? (
+      <button
+        type="button"
+        onClick={onMarkerPress}
+        aria-label={markerAriaLabel ?? "Change bullet style"}
+        className="size-2 shrink-0 cursor-pointer rounded-full bg-default-300 outline-none transition hover:ring-2 hover:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+      />
+    ) : null;
+    body = <div className="min-w-0 flex-1">{children}</div>;
+  } else {
+    const resolvedLabel = label ?? bulletVariantLabel[variant];
+    const icon =
+      variant === "caution" ? (
+        <CautionIcon />
+      ) : variant === "reminder" ? (
+        <ReminderIcon />
       ) : (
-        icon
-      )}
+        <NoteIcon />
+      );
+    marker = onMarkerPress ? (
+      <button
+        type="button"
+        onClick={onMarkerPress}
+        aria-label={markerAriaLabel ?? "Change bullet style"}
+        className="shrink-0 cursor-pointer rounded outline-none transition hover:opacity-70 focus-visible:ring-2 focus-visible:ring-accent"
+      >
+        {icon}
+      </button>
+    ) : (
+      icon
+    );
+    body = (
       <span className="flex-1">
         {!hideLabel && (
           <>
@@ -371,6 +458,92 @@ function GuideStepBullet({
         )}
         {children}
       </span>
+    );
+  }
+
+  const liClassName = cn(
+    "flex gap-2.5",
+    variant === "button" && "items-center",
+    variant === "caution" && "text-danger",
+    className,
+  );
+
+  if (!edit) {
+    return (
+      <li className={liClassName}>
+        {marker}
+        {body}
+      </li>
+    );
+  }
+
+  const { canReorder, isDragging, isOver, onRemove } = edit;
+
+  return (
+    <li
+      className={cn(
+        "group rounded-md",
+        liClassName,
+        isDragging && "opacity-40",
+        isOver && "ring-2 ring-accent",
+      )}
+      draggable={canReorder && grabbing ? true : undefined}
+      onDragStart={
+        canReorder
+          ? (event) => {
+              event.dataTransfer.effectAllowed = "move";
+              edit.onDragStart();
+            }
+          : undefined
+      }
+      onDragOver={
+        canReorder
+          ? (event) => {
+              event.preventDefault();
+              event.dataTransfer.dropEffect = "move";
+              edit.onDragOver();
+            }
+          : undefined
+      }
+      onDrop={
+        canReorder
+          ? (event) => {
+              event.preventDefault();
+              edit.onDrop();
+            }
+          : undefined
+      }
+      onDragEnd={
+        canReorder
+          ? () => {
+              setGrabbing(false);
+              edit.onDragEnd();
+            }
+          : undefined
+      }
+    >
+      {canReorder && (
+        <span
+          aria-hidden="true"
+          onPointerDown={() => setGrabbing(true)}
+          onPointerUp={() => setGrabbing(false)}
+          className="mt-1 shrink-0 cursor-grab text-default-400 transition hover:text-default-500"
+        >
+          <GripIcon />
+        </span>
+      )}
+      {marker}
+      {body}
+      {onRemove && (
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label="Remove bullet"
+          className="mt-1 shrink-0 rounded p-0.5 text-default-400 opacity-0 transition hover:text-danger focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent group-hover:opacity-100"
+        >
+          <RemoveIcon />
+        </button>
+      )}
     </li>
   );
 }

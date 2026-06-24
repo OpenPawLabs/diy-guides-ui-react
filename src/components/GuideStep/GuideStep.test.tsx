@@ -448,4 +448,79 @@ describe("GuideStep editing affordances", () => {
       .parentElement!;
     expect(wrapper).not.toHaveAttribute("draggable", "true");
   });
+
+  it("fires onAddBullet from the New bullet control", async () => {
+    const user = userEvent.setup();
+    const onAddBullet = vi.fn();
+    render(
+      <GuideStep.Bullets editing={{ onAddBullet }}>
+        <GuideStep.Bullet>One.</GuideStep.Bullet>
+      </GuideStep.Bullets>,
+    );
+    await user.click(screen.getByRole("button", { name: /new bullet/i }));
+    expect(onAddBullet).toHaveBeenCalledTimes(1);
+  });
+
+  it("fires onRemoveBullet with the bullet index", async () => {
+    const user = userEvent.setup();
+    const onRemoveBullet = vi.fn();
+    render(
+      <GuideStep.Bullets editing={{ onRemoveBullet }}>
+        <GuideStep.Bullet>First.</GuideStep.Bullet>
+        <GuideStep.Bullet>Second.</GuideStep.Bullet>
+      </GuideStep.Bullets>,
+    );
+    const removes = screen.getAllByRole("button", { name: "Remove bullet" });
+    expect(removes).toHaveLength(2);
+    await user.click(removes[1]);
+    expect(onRemoveBullet).toHaveBeenCalledWith(1);
+  });
+
+  it("hides remove and reorder controls while a single bullet remains", () => {
+    render(
+      <GuideStep.Bullets
+        editing={{ onRemoveBullet: vi.fn(), onReorderBullet: vi.fn() }}
+      >
+        <GuideStep.Bullet>Only one.</GuideStep.Bullet>
+      </GuideStep.Bullets>,
+    );
+    expect(
+      screen.queryByRole("button", { name: "Remove bullet" }),
+    ).not.toBeInTheDocument();
+    const item = screen.getByText("Only one.").closest("li")!;
+    expect(item).not.toHaveAttribute("draggable", "true");
+  });
+
+  it("reorders bullets via drag and drop when onReorderBullet is set", () => {
+    const onReorderBullet = vi.fn();
+    render(
+      <GuideStep.Bullets editing={{ onReorderBullet }}>
+        <GuideStep.Bullet>First.</GuideStep.Bullet>
+        <GuideStep.Bullet>Second.</GuideStep.Bullet>
+        <GuideStep.Bullet>Third.</GuideStep.Bullet>
+      </GuideStep.Bullets>,
+    );
+
+    const first = screen.getByText("First.").closest("li")!;
+    const third = screen.getByText("Third.").closest("li")!;
+    const dataTransfer = { effectAllowed: "", dropEffect: "" };
+
+    fireEvent.dragStart(first, { dataTransfer });
+    fireEvent.dragOver(third, { dataTransfer });
+    fireEvent.drop(third, { dataTransfer });
+
+    expect(onReorderBullet).toHaveBeenCalledWith(0, 2);
+  });
+
+  it("does not render reorder grips without onReorderBullet", () => {
+    render(
+      <GuideStep.Bullets editing={{ onRemoveBullet: vi.fn() }}>
+        <GuideStep.Bullet>First.</GuideStep.Bullet>
+        <GuideStep.Bullet>Second.</GuideStep.Bullet>
+      </GuideStep.Bullets>,
+    );
+    const first = screen.getByText("First.").closest("li")!;
+    expect(first).not.toHaveAttribute("draggable", "true");
+    expect(first.querySelector(".cursor-grab")).toBeNull();
+  });
 });

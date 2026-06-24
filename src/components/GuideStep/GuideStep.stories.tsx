@@ -60,13 +60,15 @@ that component.
 
 ## Editing affordances
 
-\`GuideStep\` is presentational by default. Two optional, off-by-default props let an
+\`GuideStep\` is presentational by default. Three optional, off-by-default props let an
 external editor drive it without changing reader output. Pass \`mediaEditing\` to make
 the media area editable — an empty add target, click-to-replace on the main image, a
 remove control per thumbnail, drag-to-reorder thumbnails (when \`onReorderImage\` is set),
-and a "+" tile to append (up to three). Pass
-\`onMarkerPress\` on a \`GuideStep.Bullet\` to turn its marker into a button, e.g. to open
-a color or variant picker. See the "Editing affordances" story.`;
+and a "+" tile to append (up to three). Pass \`editing\` to \`GuideStep.Bullets\` to manage
+the bullet list — a drag handle to reorder (when \`onReorderBullet\` is set and more than
+one bullet exists), a remove control per bullet (hidden on the last remaining bullet), and
+a "+ New bullet" button. Pass \`onMarkerPress\` on a \`GuideStep.Bullet\` to turn its marker
+into a button, e.g. to open a color or variant picker. See the "Editing affordances" story.`;
 
 const meta = {
   title: "Guide/GuideStep",
@@ -307,7 +309,7 @@ export const EditingAffordances: Story = {
     docs: {
       description: {
         story:
-          "Optional, editor-only affordances. Passing `mediaEditing` turns the media area into an editor (empty add target, click-to-replace, a remove control per thumbnail, drag-to-reorder thumbnails, and a \"+\" tile). Passing `onMarkerPress` on a bullet turns its marker into a button — here it cycles the dot color. These are off by default, so the reader output is unchanged.",
+          "Optional, editor-only affordances. Passing `mediaEditing` turns the media area into an editor (empty add target, click-to-replace, a remove control per thumbnail, drag-to-reorder thumbnails, and a \"+\" tile). Passing `editing` to `GuideStep.Bullets` manages the bullet list — drag a bullet's grip to reorder, remove with the x, or append with \"+ New bullet\". Passing `onMarkerPress` on a bullet turns its marker into a button — here it cycles the dot color. These are off by default, so the reader output is unchanged.",
       },
     },
   },
@@ -327,6 +329,11 @@ export const EditingAffordances: Story = {
     const [active, setActive] = useState(0);
     const [colorIndex, setColorIndex] = useState(0);
     const [seq, setSeq] = useState(2);
+    const [bullets, setBullets] = useState([
+      { id: "b1", text: "Drag the grip to reorder; remove with the x." },
+      { id: "b2", text: "Append more with the \u201c+ New bullet\u201d button." },
+    ]);
+    const [bulletSeq, setBulletSeq] = useState(3);
     const nextImage = () => {
       const src = `https://placehold.co/800x600/dbeafe/1e40af/png?text=Image+${seq}`;
       setSeq((value) => value + 1);
@@ -361,19 +368,43 @@ export const EditingAffordances: Story = {
               <MediaFigure key={`${index}-${src}`} src={src} />
             ))}
           </GuideStep.Media>
-          <GuideStep.Bullets>
-            <GuideStep.Bullet
-              color={palette[colorIndex]}
-              onMarkerPress={() =>
-                setColorIndex((prev) => (prev + 1) % palette.length)
-              }
-            >
-              Click the dot to cycle its color.
-            </GuideStep.Bullet>
-            <GuideStep.Bullet variant="note">
-              Click a thumbnail to select it, then replace or remove it; drag a
-              thumbnail to reorder, or use the "+" tile to add more (up to three).
-            </GuideStep.Bullet>
+          <GuideStep.Bullets
+            editing={{
+              onAddBullet: () => {
+                setBullets((prev) => [
+                  ...prev,
+                  { id: `b${bulletSeq}`, text: "New instruction." },
+                ]);
+                setBulletSeq((value) => value + 1);
+              },
+              onRemoveBullet: (index) =>
+                setBullets((prev) => prev.filter((_, i) => i !== index)),
+              onReorderBullet: (from, to) =>
+                setBullets((prev) => {
+                  const next = [...prev];
+                  const [moved] = next.splice(from, 1);
+                  next.splice(to, 0, moved);
+                  return next;
+                }),
+            }}
+          >
+            {bullets.map((bullet, index) =>
+              index === 0 ? (
+                <GuideStep.Bullet
+                  key={bullet.id}
+                  color={palette[colorIndex]}
+                  onMarkerPress={() =>
+                    setColorIndex((prev) => (prev + 1) % palette.length)
+                  }
+                >
+                  {bullet.text} Click the dot to cycle its color.
+                </GuideStep.Bullet>
+              ) : (
+                <GuideStep.Bullet key={bullet.id}>
+                  {bullet.text}
+                </GuideStep.Bullet>
+              ),
+            )}
           </GuideStep.Bullets>
         </GuideStep>
       </div>

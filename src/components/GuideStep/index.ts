@@ -4,4 +4,5 @@ export type {
   GuideStepBulletProps,
   GuideStepBulletVariant,
   GuideStepMediaEditing,
+  GuideStepBulletsEditing,
 } from "./GuideStep";

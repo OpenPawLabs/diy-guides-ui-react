@@ -52,6 +52,7 @@ export type {
   GuideStepBulletProps,
   GuideStepBulletVariant,
   GuideStepMediaEditing,
+  GuideStepBulletsEditing,
 } from "./components/GuideStep";
 
 export { GuideStepList } from "./components/GuideStepList";

@@ -620,6 +620,7 @@ function GuideStepBody({
             <div className="group relative">
               {cloneElement(active, {
                 className: cn("w-full", active.props.className),
+                zoomable: false,
               })}
               <button
                 type="button"

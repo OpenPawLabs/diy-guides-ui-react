@@ -113,6 +113,30 @@ describe("MediaFigure", () => {
     });
   });
 
+  it("opens a full-size lightbox when an image is clicked", async () => {
+    render(<MediaFigure src="/photo.jpg" />);
+
+    const trigger = screen.getByRole("button", { name: "View image full size" });
+    fireEvent.click(trigger);
+
+    const dialog = await screen.findByRole("dialog", { name: "Full size image" });
+    expect(dialog.querySelector("img")).toHaveAttribute("src", "/photo.jpg");
+  });
+
+  it("is not zoomable when zoomable is false", () => {
+    render(<MediaFigure src="/photo.jpg" zoomable={false} />);
+    expect(
+      screen.queryByRole("button", { name: "View image full size" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("does not make non-image media zoomable", () => {
+    render(<MediaFigure src="/clip.mp4" type="video" />);
+    expect(
+      screen.queryByRole("button", { name: "View image full size" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("renders a video element when type is video", () => {
     const { container } = render(
       <MediaFigure src="/clip.mp4" type="video" />,

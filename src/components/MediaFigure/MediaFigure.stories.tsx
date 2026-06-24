@@ -15,6 +15,10 @@ figure itself.
 - \`displayRegion\` — optional \`{ x, y, width }\` in **source pixels** for an exact
   4:3 crop or zoom without re-encoding the image. Height is always
   \`round(width × 3 / 4)\`.
+- \`zoomable\` — image figures open the full-size source in a modal lightbox on
+  click (default \`true\`). It applies only to \`type="image"\`; set it to \`false\`
+  in editing contexts where the click drives another action (\`GuideStep\` does this
+  automatically in edit mode).
 
 ## Annotations
 
@@ -50,6 +54,7 @@ const meta = {
   },
   argTypes: {
     type: { control: "inline-radio", options: ["image", "video", "model"] },
+    zoomable: { control: "boolean" },
   },
   args: {
     src: "https://placehold.co/800x600/e2e8f0/1e293b/png?text=Guide+photo",
@@ -68,6 +73,25 @@ export const Default: Story = {
           "The base figure: an image with no annotations. Use the controls to switch to a video.",
       },
     },
+  },
+  render: (args) => (
+    <div className="max-w-md">
+      <MediaFigure {...args} />
+    </div>
+  ),
+};
+
+export const Lightbox: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Image figures are zoomable by default — click the image to open the full-size source in a modal lightbox, then dismiss it with the close button, the backdrop, or `Esc`. Set `zoomable={false}` to opt out.",
+      },
+    },
+  },
+  args: {
+    src: "https://placehold.co/1600x1200/dbeafe/1e40af/png?text=Click+to+zoom",
   },
   render: (args) => (
     <div className="max-w-md">

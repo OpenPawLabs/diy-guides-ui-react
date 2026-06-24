@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { cn } from "@heroui/react";
+import { cn, Modal } from "@heroui/react";
 import {
   COLORS,
   hexToRgba,
@@ -153,6 +153,12 @@ export interface MediaFigureProps {
    * scaled to fill the frame without re-encoding the image.
    */
   displayRegion?: MediaDisplayRegion;
+  /**
+   * Let readers click an image to open it full size in a modal lightbox. Applies
+   * only to `type="image"`; turn it off in editing contexts where the click drives
+   * another action. @default true
+   */
+  zoomable?: boolean;
   className?: string;
 }
 
@@ -162,25 +168,55 @@ export interface MediaFigureProps {
  * `displayRegion` selects a source-pixel crop. Point markers use
  * {@link GuideColor} values so they can be visually linked to matching `GuideStep`
  * bullets; circles and rectangles use the same color for their outline and fill.
+ * Image figures are zoomable by default: clicking opens the full-size source in a
+ * modal lightbox (see `zoomable`).
  */
 export function MediaFigure({
   src,
   type = "image",
   annotations = [],
   displayRegion,
+  zoomable = true,
   className,
 }: MediaFigureProps) {
+  const frameClassName =
+    "relative aspect-[4/3] overflow-hidden rounded-lg border border-default bg-default-soft";
+  const frame = (
+    <>
+      <MediaFigureMedia src={src} type={type} displayRegion={displayRegion} />
+      {annotations.map(renderAnnotation)}
+    </>
+  );
+
   return (
     <figure className={cn("flex flex-col gap-2", className)}>
-      <div className="relative aspect-[4/3] overflow-hidden rounded-lg border border-default bg-default-soft">
-        <MediaFigureMedia
-          src={src}
-          type={type}
-          displayRegion={displayRegion}
-        />
-
-        {annotations.map(renderAnnotation)}
-      </div>
+      {zoomable && type === "image" ? (
+        <Modal>
+          <Modal.Trigger
+            aria-label="View image full size"
+            className={cn(frameClassName, "cursor-zoom-in")}
+          >
+            {frame}
+          </Modal.Trigger>
+          <Modal.Backdrop variant="blur">
+            <Modal.Container placement="center">
+              <Modal.Dialog
+                aria-label="Full size image"
+                className="w-auto max-w-[95vw] overflow-hidden bg-transparent p-0 shadow-none"
+              >
+                <img
+                  src={src}
+                  alt=""
+                  className="max-h-[88vh] w-auto max-w-[95vw] object-contain"
+                />
+                <Modal.CloseTrigger />
+              </Modal.Dialog>
+            </Modal.Container>
+          </Modal.Backdrop>
+        </Modal>
+      ) : (
+        <div className={frameClassName}>{frame}</div>
+      )}
     </figure>
   );
 }

@@ -27,9 +27,9 @@ const COMPLETE_CHECKBOX_GREEN = "#0B7A47";
 /**
  * Optional, editor-only media affordances. Presence switches `GuideStep.Media`
  * into edit mode: an empty-state add target, click-to-replace on the main image,
- * a remove control per thumbnail, and a "+" tile to append. All members are
- * intent callbacks — the library performs no file or menu logic. Omit entirely
- * for the read-only reader experience.
+ * a remove control per thumbnail, a "+" tile to append, and (with `onReorderImage`)
+ * drag-to-reorder thumbnails. All members are intent callbacks — the library
+ * performs no file or menu logic. Omit entirely for the read-only reader experience.
  */
 export interface GuideStepMediaEditing {
   /** Append a new image (e.g. open a file picker). Drives the empty target and "+" tile. */
@@ -38,6 +38,11 @@ export interface GuideStepMediaEditing {
   onReplaceImage?: (index: number) => void;
   /** Remove the image at `index` (fired by a thumbnail's remove control). */
   onRemoveImage?: (index: number) => void;
+  /**
+   * Move the image from `from` to `to`. When set, edit-mode thumbnails become
+   * drag-reorderable (the library only reports the move; the consumer reorders).
+   */
+  onReorderImage?: (from: number, to: number) => void;
   /** Selection changed to `index` (in edit mode thumbnails select on click). */
   onSelectImage?: (index: number) => void;
   /** Controlled active image index. */
@@ -372,12 +377,29 @@ function GuideStepBody({
 }) {
   const editing = mediaEditing != null;
   const [internalActive, setInternalActive] = useState(0);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
   const activeIndex = mediaEditing?.activeIndex ?? internalActive;
   const active = figures[activeIndex] ?? figures[0];
 
   const setActive = (index: number) => {
     setInternalActive(index);
     mediaEditing?.onSelectImage?.(index);
+  };
+
+  const canReorder =
+    editing && mediaEditing?.onReorderImage != null && figures.length > 1;
+
+  const endReorder = () => {
+    setDragIndex(null);
+    setOverIndex(null);
+  };
+
+  const dropOnto = (index: number) => {
+    if (dragIndex != null && dragIndex !== index) {
+      mediaEditing?.onReorderImage?.(dragIndex, index);
+    }
+    endReorder();
   };
 
   const canAdd =
@@ -434,7 +456,41 @@ function GuideStepBody({
               editing ? (
                 <div
                   key={figure.key ?? figure.props.src ?? index}
-                  className="relative"
+                  className={cn(
+                    "relative rounded-md transition-shadow",
+                    canReorder && "cursor-grab",
+                    dragIndex === index && "opacity-40",
+                    overIndex === index &&
+                      dragIndex !== index &&
+                      "ring-2 ring-accent ring-offset-2 ring-offset-background",
+                  )}
+                  draggable={canReorder || undefined}
+                  onDragStart={
+                    canReorder
+                      ? (event) => {
+                          event.dataTransfer.effectAllowed = "move";
+                          setDragIndex(index);
+                        }
+                      : undefined
+                  }
+                  onDragOver={
+                    canReorder
+                      ? (event) => {
+                          event.preventDefault();
+                          event.dataTransfer.dropEffect = "move";
+                          setOverIndex(index);
+                        }
+                      : undefined
+                  }
+                  onDrop={
+                    canReorder
+                      ? (event) => {
+                          event.preventDefault();
+                          dropOnto(index);
+                        }
+                      : undefined
+                  }
+                  onDragEnd={canReorder ? endReorder : undefined}
                 >
                   <button
                     type="button"
@@ -451,6 +507,7 @@ function GuideStepBody({
                     <img
                       src={figure.props.src}
                       alt=""
+                      draggable={false}
                       className="size-16 object-cover sm:size-20"
                     />
                   </button>

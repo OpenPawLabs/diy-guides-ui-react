@@ -34,7 +34,7 @@
     "test:watch": "vitest",
     "typecheck": "tsc -b --noEmit",
     "lint": "eslint .",
-    "publish": "pnpm build && npm publish"
+    "build:publish": "pnpm build && npm publish"
   },
   "peerDependencies": {
     "online-3d-viewer": "^0.18.0",

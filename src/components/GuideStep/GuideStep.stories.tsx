@@ -58,7 +58,8 @@ that component.
 \`GuideStep\` is presentational by default. Two optional, off-by-default props let an
 external editor drive it without changing reader output. Pass \`mediaEditing\` to make
 the media area editable — an empty add target, click-to-replace on the main image, a
-remove control per thumbnail, and a "+" tile to append (up to three). Pass
+remove control per thumbnail, drag-to-reorder thumbnails (when \`onReorderImage\` is set),
+and a "+" tile to append (up to three). Pass
 \`onMarkerPress\` on a \`GuideStep.Bullet\` to turn its marker into a button, e.g. to open
 a color or variant picker. See the "Editing affordances" story.`;
 
@@ -261,7 +262,7 @@ export const EditingAffordances: Story = {
     docs: {
       description: {
         story:
-          "Optional, editor-only affordances. Passing `mediaEditing` turns the media area into an editor (empty add target, click-to-replace, a remove control per thumbnail, and a \"+\" tile). Passing `onMarkerPress` on a bullet turns its marker into a button — here it cycles the dot color. These are off by default, so the reader output is unchanged.",
+          "Optional, editor-only affordances. Passing `mediaEditing` turns the media area into an editor (empty add target, click-to-replace, a remove control per thumbnail, drag-to-reorder thumbnails, and a \"+\" tile). Passing `onMarkerPress` on a bullet turns its marker into a button — here it cycles the dot color. These are off by default, so the reader output is unchanged.",
       },
     },
   },
@@ -301,6 +302,13 @@ export const EditingAffordances: Story = {
               ),
             onRemoveImage: (index) =>
               setImages((prev) => prev.filter((_, i) => i !== index)),
+            onReorderImage: (from, to) =>
+              setImages((prev) => {
+                const next = [...prev];
+                const [moved] = next.splice(from, 1);
+                next.splice(to, 0, moved);
+                return next;
+              }),
           }}
         >
           <GuideStep.Media>
@@ -318,8 +326,8 @@ export const EditingAffordances: Story = {
               Click the dot to cycle its color.
             </GuideStep.Bullet>
             <GuideStep.Bullet variant="note">
-              Click a thumbnail to select it, then replace or remove it; use the
-              "+" tile to add more (up to three).
+              Click a thumbnail to select it, then replace or remove it; drag a
+              thumbnail to reorder, or use the "+" tile to add more (up to three).
             </GuideStep.Bullet>
           </GuideStep.Bullets>
         </GuideStep>

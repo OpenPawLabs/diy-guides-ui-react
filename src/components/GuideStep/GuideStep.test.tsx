@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { COLORS } from "../../types/colors";
@@ -356,5 +356,63 @@ describe("GuideStep editing affordances", () => {
 
     await user.click(screen.getByRole("button", { name: "Replace image" }));
     expect(onReplaceImage).toHaveBeenCalled();
+  });
+
+  it("reorders thumbnails via drag and drop when onReorderImage is set", () => {
+    const onReorderImage = vi.fn();
+    render(
+      <GuideStep
+        number={1}
+        title="Gallery"
+        completable={false}
+        mediaEditing={{ onReorderImage }}
+      >
+        <GuideStep.Media>
+          <MediaFigure src="https://placehold.co/800x600/png?text=Image+1" />
+          <MediaFigure src="https://placehold.co/800x600/png?text=Image+2" />
+          <MediaFigure src="https://placehold.co/800x600/png?text=Image+3" />
+        </GuideStep.Media>
+        <GuideStep.Bullets>
+          <GuideStep.Bullet>Follow each view.</GuideStep.Bullet>
+        </GuideStep.Bullets>
+      </GuideStep>,
+    );
+
+    const gallery = screen.getByRole("group", { name: "Step images" });
+    const first = within(gallery).getByRole("button", { name: "Image 1" })
+      .parentElement!;
+    const third = within(gallery).getByRole("button", { name: "Image 3" })
+      .parentElement!;
+    const dataTransfer = { effectAllowed: "", dropEffect: "" };
+
+    fireEvent.dragStart(first, { dataTransfer });
+    fireEvent.dragOver(third, { dataTransfer });
+    fireEvent.drop(third, { dataTransfer });
+
+    expect(onReorderImage).toHaveBeenCalledWith(0, 2);
+  });
+
+  it("does not make thumbnails draggable without onReorderImage", () => {
+    render(
+      <GuideStep
+        number={1}
+        title="Gallery"
+        completable={false}
+        mediaEditing={{ onSelectImage: vi.fn() }}
+      >
+        <GuideStep.Media>
+          <MediaFigure src="https://placehold.co/800x600/png?text=Image+1" />
+          <MediaFigure src="https://placehold.co/800x600/png?text=Image+2" />
+        </GuideStep.Media>
+        <GuideStep.Bullets>
+          <GuideStep.Bullet>Follow each view.</GuideStep.Bullet>
+        </GuideStep.Bullets>
+      </GuideStep>,
+    );
+
+    const gallery = screen.getByRole("group", { name: "Step images" });
+    const wrapper = within(gallery).getByRole("button", { name: "Image 1" })
+      .parentElement!;
+    expect(wrapper).not.toHaveAttribute("draggable", "true");
   });
 });

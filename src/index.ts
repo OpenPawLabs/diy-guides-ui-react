@@ -37,6 +37,15 @@ export {
 export { ToolList } from "./components/ToolList";
 export type { ToolListProps, ToolListItemProps } from "./components/ToolList";
 
+export { LinkButton } from "./components/LinkButton";
+export type {
+  LinkButtonProps,
+  LinkButtonItemProps,
+  LinkButtonEditing,
+  LinkButtonVariant,
+  LinkButtonSize,
+} from "./components/LinkButton";
+
 export { GuideStep } from "./components/GuideStep";
 export type {
   GuideStepProps,

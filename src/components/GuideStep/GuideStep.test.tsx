@@ -182,6 +182,39 @@ describe("GuideStep", () => {
     ).toBeInTheDocument();
   });
 
+  it("renders a button bullet as its children with no marker", () => {
+    const { container } = render(
+      <GuideStep.Bullets>
+        <GuideStep.Bullet variant="button">
+          <a href="./files/model.3mf">Download 3MF</a>
+        </GuideStep.Bullet>
+      </GuideStep.Bullets>,
+    );
+    expect(
+      screen.getByRole("link", { name: "Download 3MF" }),
+    ).toBeInTheDocument();
+    expect(container.querySelector("span[aria-hidden='true']")).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Change bullet style" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("renders a pressable marker for a button bullet when onMarkerPress is set", async () => {
+    const user = userEvent.setup();
+    const onMarkerPress = vi.fn();
+    render(
+      <GuideStep.Bullets>
+        <GuideStep.Bullet variant="button" onMarkerPress={onMarkerPress}>
+          <a href="./files/model.3mf">Download 3MF</a>
+        </GuideStep.Bullet>
+      </GuideStep.Bullets>,
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Change bullet style" }),
+    );
+    expect(onMarkerPress).toHaveBeenCalledTimes(1);
+  });
+
   it("renders reminder and note bullet variants", () => {
     render(
       <GuideStep.Bullets>

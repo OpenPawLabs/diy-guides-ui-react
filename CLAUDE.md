@@ -71,4 +71,4 @@ Manually confirm new stories render in Storybook when UI changes are involved.
 
 ## `Guide/*` components (implemented)
 
-GuideLayout, GuideStepList, GuideStep, MediaFigure, ToolList, Callout, DifficultyBadge — all built, tested, and documented in Storybook. They use a composition-first (compound) API. Guide colors live in `src/types/colors.ts`; callout types in `src/types/callout.ts`. See AGENTS.md for the full API reference and conventions before extending them.
+GuideLayout, GuideStepList, GuideStep, MediaFigure, ToolList, LinkButton, Callout, DifficultyBadge — all built, tested, and documented in Storybook. They use a composition-first (compound) API. Guide colors live in `src/types/colors.ts`; callout types in `src/types/callout.ts`. See AGENTS.md for the full API reference and conventions before extending them.

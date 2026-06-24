@@ -13,6 +13,7 @@ Active development. The core guide component set is implemented, tested, and doc
 | `GuideStep` | A single step — number badge, completion checkbox, media, and bulleted instructions |
 | `MediaFigure` | Image/video with percentage-positioned annotation markers |
 | `ToolList` | Titled card of required tools and parts |
+| `LinkButton` | Download / link button with an optional dropdown of file variants |
 | `Callout` | Safety / informational callout (`note` → `danger` types) |
 | `DifficultyBadge` | Color-coded difficulty pill (easy / moderate / difficult) |
 

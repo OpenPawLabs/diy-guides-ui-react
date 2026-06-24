@@ -74,13 +74,23 @@ export interface GuideStepProps {
   className?: string;
 }
 
-/** Bullet presentation — `dot` uses a colored dot; others use semantic icons and labels. */
-export type GuideStepBulletVariant = "dot" | "caution" | "reminder" | "note";
+/**
+ * Bullet presentation — `dot` uses a colored dot; `caution` / `reminder` / `note`
+ * use semantic icons and labels; `button` renders its children (e.g. a `LinkButton`)
+ * as a standalone action with no marker.
+ */
+export type GuideStepBulletVariant =
+  | "dot"
+  | "caution"
+  | "reminder"
+  | "note"
+  | "button";
 
 export interface GuideStepBulletProps {
   /**
    * Bullet style. `dot` renders a colored dot (link to `MediaFigure`
-   * annotations); `caution`, `reminder`, and `note` render iFixit-style semantic bullets.
+   * annotations); `caution`, `reminder`, and `note` render iFixit-style semantic bullets;
+   * `button` renders its children (typically a `LinkButton`) with no marker.
    * @default "dot"
    */
   variant?: GuideStepBulletVariant;
@@ -102,7 +112,7 @@ export interface GuideStepBulletProps {
 }
 
 const bulletVariantLabel: Record<
-  Exclude<GuideStepBulletVariant, "dot">,
+  Exclude<GuideStepBulletVariant, "dot" | "button">,
   string
 > = {
   caution: calloutTypeLabel.caution,
@@ -303,6 +313,22 @@ function GuideStepBullet({
           />
         )}
         <span className="flex-1">{children}</span>
+      </li>
+    );
+  }
+
+  if (variant === "button") {
+    return (
+      <li className={cn("flex items-center gap-2.5", className)}>
+        {onMarkerPress && (
+          <button
+            type="button"
+            onClick={onMarkerPress}
+            aria-label={markerAriaLabel ?? "Change bullet style"}
+            className="size-2 shrink-0 cursor-pointer rounded-full bg-default-300 outline-none transition hover:ring-2 hover:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+          />
+        )}
+        <div className="min-w-0 flex-1">{children}</div>
       </li>
     );
   }

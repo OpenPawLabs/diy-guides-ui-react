@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { GuideStep } from "./GuideStep";
 import { MediaFigure } from "../MediaFigure";
+import { LinkButton } from "../LinkButton";
 import type { GuideColor } from "../../types/colors";
 
 const componentDocs = `A single numbered step: a header (number badge, title, and an optional
@@ -45,6 +46,10 @@ visually link the words to the spot on the image.
 | \`note\` | info circle, "Note:" | Extra detail or context |
 
 Override the auto label with \`label\`, or hide it with \`hideLabel\`.
+
+**Button bullets** (\`variant="button"\`) drop the marker entirely and render their children
+as a standalone action — typically a \`LinkButton\` offering a download or link (and a
+dropdown of alternative files). Use one when a step hands the reader a file or destination.
 
 ## Completion
 
@@ -223,6 +228,46 @@ export const SemanticBullets: Story = {
           </GuideStep.Bullet>
           <GuideStep.Bullet variant="caution" label="High voltage">
             Discharge the capacitor before touching the board.
+          </GuideStep.Bullet>
+        </GuideStep.Bullets>
+      </GuideStep>
+    </div>
+  ),
+};
+
+export const ButtonBullet: Story = {
+  name: "Button bullet",
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "A `button` bullet renders no marker and hosts a `LinkButton`, handing the reader a download (with a dropdown of alternative formats) directly inside the step.",
+      },
+    },
+  },
+  args: { number: 2, title: "Print the enclosure", completable: false },
+  render: (args) => (
+    <div className="max-w-4xl">
+      <GuideStep {...args}>
+        <GuideStep.Media>
+          <MediaFigure src="https://placehold.co/800x600/e2e8f0/1e293b/png?text=Enclosure" />
+        </GuideStep.Media>
+        <GuideStep.Bullets>
+          <GuideStep.Bullet>
+            Print at 0.2&nbsp;mm layer height with supports off.
+          </GuideStep.Bullet>
+          <GuideStep.Bullet variant="button">
+            <LinkButton>
+              <LinkButton.Item href="./files/enclosure.3mf" download>
+                Download 3MF
+              </LinkButton.Item>
+              <LinkButton.Item href="./files/enclosure.stl" download>
+                Download STL
+              </LinkButton.Item>
+              <LinkButton.Item href="./files/enclosure.step" download>
+                Download STEP
+              </LinkButton.Item>
+            </LinkButton>
           </GuideStep.Bullet>
         </GuideStep.Bullets>
       </GuideStep>

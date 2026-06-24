@@ -55,7 +55,7 @@ describe("LinkButton (reader)", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("reveals the remaining options when the menu opens", async () => {
+  it("reveals all options when the menu opens", async () => {
     const user = userEvent.setup();
     render(
       <LinkButton menuLabel="Other formats">
@@ -68,8 +68,12 @@ describe("LinkButton (reader)", () => {
     );
     await user.click(screen.getByRole("button", { name: "Other formats" }));
     expect(
-      await screen.findByRole("menuitem", { name: "Download STL" }),
-    ).toHaveAttribute("href", "/b.stl");
+      await screen.findByRole("menuitem", { name: "Download 3MF" }),
+    ).toHaveAttribute("href", "/a.3mf");
+    expect(screen.getByRole("menuitem", { name: "Download STL" })).toHaveAttribute(
+      "href",
+      "/b.stl",
+    );
     const external = screen.getByRole("menuitem", { name: "View online" });
     expect(external).toHaveAttribute("target", "_blank");
     expect(external).toHaveAttribute("rel", expect.stringContaining("noreferrer"));

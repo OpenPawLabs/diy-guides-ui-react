@@ -3,6 +3,8 @@
 import {
   Children,
   isValidElement,
+  useLayoutEffect,
+  useRef,
   useState,
   type ReactElement,
   type ReactNode,
@@ -85,7 +87,7 @@ function ChevronDownIcon() {
       strokeWidth={2.5}
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="size-4"
+      className="mr-1 size-4 shrink-0"
     >
       <path d="m6 9 6 6 6-6" />
     </svg>
@@ -170,12 +172,27 @@ function linkAttrs(item: ReactElement<LinkButtonItemProps>) {
   };
 }
 
-/** Thin centered divider between the primary action and the dropdown trigger. */
+function menuItemButtonClass(
+  variant: LinkButtonVariant,
+  size: LinkButtonSize,
+  isLast: boolean,
+  hasSeparator: boolean,
+) {
+  return cn(
+    buttonVariants({ variant, size, fullWidth: true }),
+    "!min-h-0 !justify-center !rounded-none",
+    isLast && "!rounded-b-3xl",
+    hasSeparator && "border-b border-separator",
+    "hover:!bg-[var(--button-bg-hover)] data-[hovered=true]:!bg-[var(--button-bg-hover)]",
+  );
+}
+
+/** Thin divider overlaid on the start edge of a grouped button (HeroUI button-group pattern). */
 function SplitDivider() {
   return (
     <span
       aria-hidden="true"
-      className="pointer-events-none z-10 my-auto h-5 w-px self-center rounded-full bg-current opacity-25"
+      className={buttonGroupVariants({ orientation: "horizontal" }).separator()}
     />
   );
 }
@@ -213,9 +230,9 @@ function LinkButtonRoot({
   }
 
   const [primary, ...rest] = items;
-  const primaryClass = buttonVariants({ variant, size });
 
   if (rest.length === 0) {
+    const primaryClass = buttonVariants({ variant: "secondary", size });
     return (
       <Link {...linkAttrs(primary)} className={cn(primaryClass, className)}>
         {icon}
@@ -225,7 +242,56 @@ function LinkButtonRoot({
   }
 
   return (
+    <LinkButtonSplit
+      items={items}
+      variant={variant}
+      size={size}
+      icon={icon}
+      menuLabel={menuLabel}
+      className={className}
+    />
+  );
+}
+
+interface LinkButtonSplitProps {
+  items: ReactElement<LinkButtonItemProps>[];
+  variant: LinkButtonVariant;
+  size: LinkButtonSize;
+  icon?: ReactNode;
+  menuLabel: string;
+  className?: string;
+}
+
+function LinkButtonSplit({
+  items,
+  variant,
+  size,
+  icon,
+  menuLabel,
+  className,
+}: LinkButtonSplitProps) {
+  const groupRef = useRef<HTMLDivElement>(null);
+  const [groupWidth, setGroupWidth] = useState<number>();
+  const [primary] = items;
+  const primaryClass = buttonVariants({ variant, size });
+
+  useLayoutEffect(() => {
+    const node = groupRef.current;
+    if (!node) {
+      return;
+    }
+
+    const updateWidth = () => setGroupWidth(node.offsetWidth);
+    updateWidth();
+
+    const observer = new ResizeObserver(updateWidth);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [items, variant, size]);
+
+  return (
     <div
+      ref={groupRef}
       className={cn(
         buttonGroupVariants({ orientation: "horizontal" }).base(),
         className,
@@ -235,18 +301,37 @@ function LinkButtonRoot({
         {icon}
         {primary.props.children}
       </Link>
-      <SplitDivider />
       <Dropdown>
         <Dropdown.Trigger
           aria-label={menuLabel}
-          className={buttonVariants({ variant, size, isIconOnly: true })}
+          className={cn(
+            buttonVariants({ variant, size, isIconOnly: true }),
+            "!inline-flex items-center justify-center",
+          )}
         >
+          <SplitDivider />
           <ChevronDownIcon />
         </Dropdown.Trigger>
-        <Dropdown.Popover placement="bottom end">
-          <Dropdown.Menu>
-            {rest.map((item, index) => (
-              <Dropdown.Item key={index} {...linkAttrs(item)}>
+        <Dropdown.Popover
+          placement="bottom"
+          offset={0}
+          triggerRef={groupRef}
+          className="!max-w-none !p-0"
+          style={groupWidth ? { minWidth: groupWidth } : undefined}
+        >
+          <Dropdown.Menu className="!gap-0 !p-0">
+            {items.map((item, index) => (
+              <Dropdown.Item
+                key={index}
+                {...linkAttrs(item)}
+                className={menuItemButtonClass(
+                  "secondary",
+                  size,
+                  index === items.length - 1,
+                  index < items.length - 1,
+                )}
+              >
+                {index === 0 ? icon : null}
                 {item.props.children}
               </Dropdown.Item>
             ))}
@@ -314,10 +399,7 @@ function LinkButtonEditor({
             type="button"
             onClick={() => onSelectItem(0)}
             aria-label="Edit primary link"
-            className={cn(
-              buttonVariants({ variant, size, isIconOnly: true }),
-              "relative",
-            )}
+            className={buttonVariants({ variant, size, isIconOnly: true })}
           >
             <SplitDivider />
             <LinkIcon />
@@ -328,10 +410,7 @@ function LinkButtonEditor({
           onClick={() => setOpen((value) => !value)}
           aria-label={menuLabel}
           aria-expanded={open}
-          className={cn(
-            buttonVariants({ variant, size, isIconOnly: true }),
-            "relative",
-          )}
+          className={buttonVariants({ variant, size, isIconOnly: true })}
         >
           {!(primary && onSelectItem) && <SplitDivider />}
           <ChevronDownIcon />

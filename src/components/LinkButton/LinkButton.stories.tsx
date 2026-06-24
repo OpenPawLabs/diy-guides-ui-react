@@ -127,6 +127,33 @@ export const Split: Story = {
     </LinkButton>
   ),
 };
+export const SplitWide: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "With multiple items the primary action sits on the left and the chevron opens the rest. Open the menu to download the other formats.",
+      },
+    },
+  },
+  args: { variant: "primary", size: "md" },
+  render: (args) => (
+    <LinkButton {...args}>
+      <LinkButton.Item href="./files/model.3mf" download>
+        Download 3MF
+      </LinkButton.Item>
+      <LinkButton.Item href="./files/model.stl" download>
+        Download STL
+      </LinkButton.Item>
+      <LinkButton.Item href="./files/model.step" download>
+        Download STEP
+      </LinkButton.Item>
+      <LinkButton.Item href="https://cad.onshape.com">
+        Open CAD model in OnShape and other really long text
+      </LinkButton.Item>
+    </LinkButton>
+  ),
+};
 
 export const Navigation: Story = {
   parameters: {

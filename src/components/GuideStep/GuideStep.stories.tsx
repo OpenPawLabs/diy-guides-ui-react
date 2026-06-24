@@ -26,7 +26,9 @@ A step is built from two required slots:
 ## GuideStep.Media
 
 Holds **one to three** \`MediaFigure\` elements. The first is the main image; any
-others become hover/focus thumbnails that swap the main view.
+others become hover/focus thumbnails that swap the main view. Video and 3D-model
+figures have no still image, so their thumbnails render a colored placeholder (a
+play icon or "3D") rather than a broken image — see the "Mixed media thumbnails" story.
 
 ## GuideStep.Bullets and GuideStep.Bullet
 
@@ -152,6 +154,57 @@ export const MultipleImages: Story = {
           </GuideStep.Bullet>
           <GuideStep.Bullet variant="note">
             Photograph each layer before moving to the next.
+          </GuideStep.Bullet>
+        </GuideStep.Bullets>
+      </GuideStep>
+    </div>
+  ),
+};
+
+export const MixedMedia: Story = {
+  name: "Mixed media thumbnails",
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'A step can mix images, videos, and 3D models. Videos and models have no still image, so their thumbnails render a colored placeholder — a play icon for `type="video"` and "3D" for `type="model"` — instead of a broken image. Hover or focus a thumbnail to view it full size.',
+      },
+    },
+  },
+  args: { number: 1, title: "Print and assemble the bracket" },
+  render: (args) => (
+    <div className="max-w-4xl">
+      <GuideStep {...args}>
+        <GuideStep.Media>
+          <MediaFigure
+            type="video"
+            src="https://www.w3schools.com/html/mov_bbb.mp4"
+          />
+          <MediaFigure src="https://placehold.co/800x600/e2e8f0/1e293b/png?text=Printed+bracket" />
+          <MediaFigure
+            type="model"
+            src="https://raw.githubusercontent.com/kovacsv/Online3DViewer/master/test/testfiles/stl/stl_ascii.stl"
+          />
+        </GuideStep.Media>
+        <GuideStep.Bullets>
+          <GuideStep.Bullet>
+            Review the photo, then watch the clip and inspect the 3D model.
+          </GuideStep.Bullet>
+          <GuideStep.Bullet variant="note">
+            Video and model thumbnails show a placeholder.
+          </GuideStep.Bullet>
+          <GuideStep.Bullet variant="button">
+            <LinkButton>
+              <LinkButton.Item href="./files/enclosure.3mf" download>
+                Download 3MF
+              </LinkButton.Item>
+              <LinkButton.Item href="./files/enclosure.stl" download>
+                Download STL
+              </LinkButton.Item>
+              <LinkButton.Item href="./files/enclosure.step" download>
+                Download STEP
+              </LinkButton.Item>
+            </LinkButton>
           </GuideStep.Bullet>
         </GuideStep.Bullets>
       </GuideStep>

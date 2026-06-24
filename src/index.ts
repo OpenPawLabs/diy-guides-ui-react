@@ -19,9 +19,10 @@ export type {
 export { Callout } from "./components/Callout";
 export type { CalloutProps } from "./components/Callout";
 
-export { MediaFigure } from "./components/MediaFigure";
+export { MediaFigure, MediaFigureThumbnail } from "./components/MediaFigure";
 export type {
   MediaFigureProps,
+  MediaFigureThumbnailProps,
   MediaAnnotation,
   MediaDisplayRegion,
   PointAnnotation,

@@ -7,3 +7,5 @@ export type {
   CircleAnnotation,
   RectangleAnnotation,
 } from "./MediaFigure";
+export { MediaFigureThumbnail } from "./MediaFigureThumbnail";
+export type { MediaFigureThumbnailProps } from "./MediaFigureThumbnail";

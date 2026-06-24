@@ -14,7 +14,11 @@ import { Button, Checkbox, cn } from "@heroui/react";
 import { useControlledState } from "../../hooks/useControlledState";
 import { calloutTypeLabel } from "../../types/callout";
 import { COLORS, type GuideColor } from "../../types/colors";
-import { MediaFigure, type MediaFigureProps } from "../MediaFigure";
+import {
+  MediaFigure,
+  MediaFigureThumbnail,
+  type MediaFigureProps,
+} from "../MediaFigure";
 
 const MAX_STEP_IMAGES = 3;
 
@@ -703,11 +707,10 @@ function GuideStepBody({
                     aria-label={`Image ${index + 1}`}
                     aria-pressed={index === activeIndex}
                   >
-                    <img
+                    <MediaFigureThumbnail
                       src={figure.props.src}
-                      alt=""
-                      draggable={false}
-                      className="size-16 object-cover sm:size-20"
+                      type={figure.props.type}
+                      className="size-16 sm:size-20"
                     />
                   </button>
                   <button
@@ -734,10 +737,10 @@ function GuideStepBody({
                   aria-label={`Image ${index + 1}`}
                   aria-pressed={index === activeIndex}
                 >
-                  <img
+                  <MediaFigureThumbnail
                     src={figure.props.src}
-                    alt=""
-                    className="size-16 object-cover sm:size-20"
+                    type={figure.props.type}
+                    className="size-16 sm:size-20"
                   />
                 </button>
               ),

@@ -9,7 +9,7 @@ figure itself.
 ## Media
 
 - \`src\` — the media URL.
-- \`type\` — \`"image"\` (default), \`"video"\` (renders a \`<video controls>\`), or \`"model"\` (interactive 3D viewer via [online-3d-viewer](https://www.npmjs.com/package/online-3d-viewer) with Z-up, free orbit, and orthographic camera).
+- \`type\` — \`"image"\` (default), \`"video"\` (renders a \`<video controls>\`), or \`"model"\` (interactive 3D viewer via [online-3d-viewer](https://www.npmjs.com/package/online-3d-viewer) with Z-up, free orbit, and orthographic camera). In a multi-image \`GuideStep\`, the \`MediaFigureThumbnail\` companion renders a colored placeholder (a play icon or "3D") for \`video\` and \`model\` sources so they never appear broken in the gallery.
 - **Fixed 4:3 frame** — every figure uses the same aspect ratio for consistent step
   layout. Non-4:3 uploads are center-cropped to fit.
 - \`displayRegion\` — optional \`{ x, y, width }\` in **source pixels** for an exact

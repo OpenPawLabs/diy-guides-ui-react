@@ -1,4 +1,4 @@
-export { MediaFigure } from "./MediaFigure";
+export { MediaFigure, mediaFigureType } from "./MediaFigure";
 export type {
   MediaFigureProps,
   MediaAnnotation,

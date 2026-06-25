@@ -16,6 +16,7 @@ import { calloutTypeLabel } from "../../types/callout";
 import { COLORS, type GuideColor } from "../../types/colors";
 import {
   MediaFigure,
+  mediaFigureType,
   MediaFigureThumbnail,
   type MediaFigureProps,
 } from "../MediaFigure";
@@ -298,7 +299,41 @@ function GripIcon() {
 function isMediaFigure(
   node: ReactNode,
 ): node is ReactElement<MediaFigureProps> {
-  return isValidElement(node) && node.type === MediaFigure;
+  if (!isValidElement(node)) {
+    return false;
+  }
+
+  if (node.type === MediaFigure) {
+    return true;
+  }
+
+  return (
+    typeof node.type === "function" &&
+    (node.type as unknown as { [key: symbol]: unknown })[mediaFigureType] ===
+      true
+  );
+}
+
+/** Props preview wrappers may accept to render a resolved gallery thumbnail. */
+type MediaFigureThumbnailPreviewProps = MediaFigureProps & {
+  thumbnailPreview?: boolean;
+};
+
+function renderFigureThumbnail(
+  figure: ReactElement<MediaFigureThumbnailPreviewProps>,
+  className?: string,
+) {
+  if (figure.type === MediaFigure) {
+    return (
+      <MediaFigureThumbnail
+        src={figure.props.src}
+        type={figure.props.type}
+        className={className}
+      />
+    );
+  }
+
+  return cloneElement(figure, { thumbnailPreview: true, className });
 }
 
 function isGuideStepBullet(
@@ -765,11 +800,7 @@ function GuideStepBody({
                     aria-label={`Image ${index + 1}`}
                     aria-pressed={index === activeIndex}
                   >
-                    <MediaFigureThumbnail
-                      src={figure.props.src}
-                      type={figure.props.type}
-                      className="size-16 sm:size-20"
-                    />
+                    {renderFigureThumbnail(figure, "size-16 sm:size-20")}
                   </button>
                   <button
                     type="button"
@@ -795,11 +826,7 @@ function GuideStepBody({
                   aria-label={`Image ${index + 1}`}
                   aria-pressed={index === activeIndex}
                 >
-                  <MediaFigureThumbnail
-                    src={figure.props.src}
-                    type={figure.props.type}
-                    className="size-16 sm:size-20"
-                  />
+                  {renderFigureThumbnail(figure, "size-16 sm:size-20")}
                 </button>
               ),
             )}

@@ -274,3 +274,9 @@ export function MediaFigure({
     </figure>
   );
 }
+
+/** Recognizes MDX preview wrappers as MediaFigure slots in `GuideStep.Media`. */
+export const mediaFigureType = Symbol.for("@openpawlabs/diy-guides-ui/MediaFigure");
+
+(MediaFigure as typeof MediaFigure & { [key: symbol]: boolean })[mediaFigureType] =
+  true;

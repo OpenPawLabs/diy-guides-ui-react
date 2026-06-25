@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { COLORS } from "../../types/colors";
 import { GuideStep } from "./GuideStep";
-import { MediaFigure } from "../MediaFigure";
+import { MediaFigure, mediaFigureType, type MediaFigureProps } from "../MediaFigure";
 
 const stepPhoto = {
   src: "https://placehold.co/800x600/png?text=Step",
@@ -155,6 +155,52 @@ describe("GuideStep", () => {
     );
     expect(container.querySelector(".aspect-\\[4\\/3\\] img")).toBeInTheDocument();
     expect(screen.getByText("Pry along the seam.")).toBeInTheDocument();
+  });
+
+  it("recognizes a marked MediaFigure wrapper inside GuideStep.Media", () => {
+    function PreviewMediaFigure(props: MediaFigureProps) {
+      return <MediaFigure {...props} />;
+    }
+    PreviewMediaFigure[mediaFigureType] = true;
+
+    const { container } = render(
+      <GuideStep number={1} title="Preview step">
+        <GuideStep.Media>
+          <PreviewMediaFigure src="https://placehold.co/800x600/png?text=Wrapped" />
+        </GuideStep.Media>
+        <GuideStep.Bullets>
+          <GuideStep.Bullet>Follow the preview wrapper.</GuideStep.Bullet>
+        </GuideStep.Bullets>
+      </GuideStep>,
+    );
+
+    expect(container.querySelector(".aspect-\\[4\\/3\\] img")).toBeInTheDocument();
+  });
+
+  it("renders gallery thumbnails through a marked MediaFigure wrapper", () => {
+    function PreviewMediaFigure(props: MediaFigureProps) {
+      return <MediaFigure {...props} />;
+    }
+    PreviewMediaFigure[mediaFigureType] = true;
+
+    const { container } = render(
+      <GuideStep number={1} title="Multi image step">
+        <GuideStep.Media>
+          <PreviewMediaFigure src="https://placehold.co/800x600/png?text=Image+1" />
+          <PreviewMediaFigure src="https://placehold.co/800x600/png?text=Image+2" />
+        </GuideStep.Media>
+        <GuideStep.Bullets>
+          <GuideStep.Bullet>Swap between images.</GuideStep.Bullet>
+        </GuideStep.Bullets>
+      </GuideStep>,
+    );
+
+    const thumbnails = container.querySelectorAll(".size-16 img, .sm\\:size-20 img");
+    expect(thumbnails.length).toBeGreaterThanOrEqual(2);
+    expect(thumbnails[0]).toHaveAttribute(
+      "src",
+      "https://placehold.co/800x600/png?text=Image+1",
+    );
   });
 
   it("renders dot bullets with the selected color", () => {

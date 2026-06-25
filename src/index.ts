@@ -21,6 +21,7 @@ export type { CalloutProps } from "./components/Callout";
 
 export {
   MediaFigure,
+  mediaFigureType,
   MediaFigureThumbnail,
   MediaCropEditor,
 } from "./components/MediaFigure";

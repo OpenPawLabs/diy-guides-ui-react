@@ -624,6 +624,8 @@ function GuideStepBody({
   const [overIndex, setOverIndex] = useState<number | null>(null);
   const activeIndex = mediaEditing?.activeIndex ?? internalActive;
   const active = figures[activeIndex] ?? figures[0];
+  const activeMediaType = active?.props.type ?? "image";
+  const canEditImageMedia = activeMediaType === "image";
 
   const setActive = (index: number) => {
     setInternalActive(index);
@@ -663,15 +665,17 @@ function GuideStepBody({
                 zoomable: false,
               })}
               <div className="absolute inset-0 flex items-center justify-center gap-2 rounded-lg opacity-0 transition group-hover:bg-foreground/40 group-hover:opacity-100 focus-within:bg-foreground/40 focus-within:opacity-100">
-                <button
-                  type="button"
-                  onClick={() => mediaEditing?.onEditAnnotations?.(activeIndex)}
-                  className="flex items-center gap-1.5 rounded-md bg-background/90 px-2.5 py-1.5 text-sm font-semibold text-foreground shadow transition hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                >
-                  <PencilIcon />
-                  Edit annotations
-                </button>
-                {mediaEditing?.onEditCrop && (
+                {canEditImageMedia && (
+                  <button
+                    type="button"
+                    onClick={() => mediaEditing?.onEditAnnotations?.(activeIndex)}
+                    className="flex items-center gap-1.5 rounded-md bg-background/90 px-2.5 py-1.5 text-sm font-semibold text-foreground shadow transition hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  >
+                    <PencilIcon />
+                    Edit annotations
+                  </button>
+                )}
+                {canEditImageMedia && mediaEditing?.onEditCrop && (
                   <button
                     type="button"
                     onClick={() => mediaEditing?.onEditCrop?.(activeIndex)}

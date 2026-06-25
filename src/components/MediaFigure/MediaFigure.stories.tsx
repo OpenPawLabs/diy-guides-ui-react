@@ -25,7 +25,10 @@ figure itself.
 - \`zoomable\` — image figures open the full-size source in a modal lightbox on
   click (default \`true\`). It applies only to \`type="image"\`; set it to \`false\`
   in editing contexts where the click drives another action (\`GuideStep\` does this
-  automatically in edit mode).
+  automatically in edit mode). The lightbox sizes itself to the image's intrinsic
+  dimensions, so \`SVG\` sources must declare \`width\`/\`height\` (not just a
+  \`viewBox\`) — a dimensionless SVG has no intrinsic size and would collapse to
+  nothing in the lightbox.
 
 ## Annotations
 

@@ -4,6 +4,7 @@
   "description": "React UI library for building open-source, iFixit-style step-by-step diy guides",
   "license": "MIT",
   "type": "module",
+  "packageManager": "pnpm@10.32.1",
   "main": "./dist/diy-guides-ui.cjs",
   "module": "./dist/diy-guides-ui.js",
   "types": "./dist/index.d.ts",

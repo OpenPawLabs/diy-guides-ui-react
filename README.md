@@ -4,7 +4,7 @@ Open-source React UI library for building **iFixit-style DIY guides** — step-b
 
 ## Status
 
-Active development. The core guide component set is implemented, tested, and documented in Storybook:
+Active development. The core guide component set is implemented, tested, and documented in [Storybook](https://openpawlabs.github.io/diy-guides-ui-react/) (deployed to GitHub Pages on every push to `main`):
 
 | Component | Purpose |
 |-----------|---------|

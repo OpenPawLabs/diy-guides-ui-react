@@ -175,6 +175,12 @@ export interface MediaFigureProps {
   src: string;
   /** Media kind. @default "image" */
   type?: "image" | "video" | "model";
+  /**
+   * File name with extension for 3D models when `src` is a blob or
+   * extension-less URL. Pass the on-disk name (for example from
+   * `./images/part.stl`) so online-3d-viewer can detect the format.
+   */
+  modelFileName?: string;
   /** Markers overlaid on the media, positioned by percentage of the visible frame. */
   annotations?: MediaAnnotation[];
   /**
@@ -208,6 +214,7 @@ export interface MediaFigureProps {
 export function MediaFigure({
   src,
   type = "image",
+  modelFileName,
   annotations = [],
   displayRegion,
   zoomable = true,
@@ -218,7 +225,12 @@ export function MediaFigure({
     "relative aspect-[4/3] overflow-hidden rounded-lg border border-default bg-default-soft";
   const frame = (
     <>
-      <MediaFigureMedia src={src} type={type} displayRegion={displayRegion} />
+      <MediaFigureMedia
+        src={src}
+        type={type}
+        displayRegion={displayRegion}
+        modelFileName={modelFileName}
+      />
       {annotationEditing ? (
         <MediaFigureAnnotationEditor
           annotations={annotations}

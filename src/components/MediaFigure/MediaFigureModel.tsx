@@ -4,9 +4,24 @@ import { useEffect, useRef } from "react";
 
 export interface MediaFigureModelProps {
   src: string;
+  /**
+   * File name with extension for blob or extension-less URLs. Required when
+   * `src` is a blob URL because online-3d-viewer infers format from the name.
+   */
+  modelFileName?: string;
 }
 
-export function MediaFigureModel({ src }: MediaFigureModelProps) {
+function modelExtensionInUrl(src: string): string | null {
+  const path = src.split(/[?#]/)[0] ?? src;
+  const slash = path.lastIndexOf("/");
+  const dot = path.lastIndexOf(".");
+  if (dot <= slash) {
+    return null;
+  }
+  return path.slice(dot + 1).toLowerCase() || null;
+}
+
+export function MediaFigureModel({ src, modelFileName }: MediaFigureModelProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,7 +53,18 @@ export function MediaFigureModel({ src }: MediaFigureModelProps) {
       });
 
       viewer = embeddedViewer;
-      embeddedViewer.LoadModelFromUrlList([src]);
+
+      const useInputFiles =
+        src.startsWith("blob:") ||
+        (modelExtensionInUrl(src) === null && Boolean(modelFileName));
+
+      if (useInputFiles && modelFileName) {
+        embeddedViewer.LoadModelFromInputFiles([
+          new OV.InputFile(modelFileName, OV.FileSource.Url, src),
+        ]);
+      } else {
+        embeddedViewer.LoadModelFromUrlList([src]);
+      }
 
       if (typeof ResizeObserver !== "undefined") {
         resizeObserver = new ResizeObserver(() => {
@@ -53,7 +79,7 @@ export function MediaFigureModel({ src }: MediaFigureModelProps) {
       resizeObserver?.disconnect();
       viewer?.Destroy();
     };
-  }, [src]);
+  }, [src, modelFileName]);
 
   return (
     <div

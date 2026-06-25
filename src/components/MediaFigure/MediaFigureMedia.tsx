@@ -11,12 +11,14 @@ export interface MediaFigureMediaProps {
   src: string;
   type: "image" | "video" | "model";
   displayRegion?: MediaDisplayRegion;
+  modelFileName?: string;
 }
 
 export function MediaFigureMedia({
   src,
   type,
   displayRegion,
+  modelFileName,
 }: MediaFigureMediaProps) {
   const frameRef = useRef<HTMLDivElement>(null);
   const [sourceSize, setSourceSize] = useState<{
@@ -87,7 +89,7 @@ export function MediaFigureMedia({
   };
 
   if (type === "model") {
-    return <MediaFigureModel src={src} />;
+    return <MediaFigureModel src={src} modelFileName={modelFileName} />;
   }
 
   return (

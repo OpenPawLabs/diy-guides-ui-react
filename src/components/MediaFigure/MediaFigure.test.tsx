@@ -4,6 +4,7 @@ import { MediaFigure } from "./MediaFigure";
 
 const mockDestroy = vi.fn();
 const mockLoadModelFromUrlList = vi.fn();
+const mockLoadModelFromInputFiles = vi.fn();
 const mockResize = vi.fn();
 const mockSetNavigationMode = vi.fn();
 const mockSetUpVector = vi.fn();
@@ -17,6 +18,7 @@ vi.mock("online-3d-viewer", () => ({
   ) {
     const instance = {
       LoadModelFromUrlList: mockLoadModelFromUrlList,
+      LoadModelFromInputFiles: mockLoadModelFromInputFiles,
       Resize: mockResize,
       Destroy: mockDestroy,
       GetViewer: () => ({
@@ -38,12 +40,21 @@ vi.mock("online-3d-viewer", () => ({
   Direction: { Z: 3 },
   RGBAColor: vi.fn(function RGBAColor() {}),
   RGBColor: vi.fn(function RGBColor() {}),
+  InputFile: vi.fn(function InputFile(
+    name: string,
+    source: unknown,
+    url: string,
+  ) {
+    return { name, source, url };
+  }),
+  FileSource: { Url: "url" },
 }));
 
 describe("MediaFigure", () => {
   beforeEach(() => {
     mockDestroy.mockClear();
     mockLoadModelFromUrlList.mockClear();
+    mockLoadModelFromInputFiles.mockClear();
     mockResize.mockClear();
     mockSetNavigationMode.mockClear();
     mockSetUpVector.mockClear();
@@ -157,6 +168,27 @@ describe("MediaFigure", () => {
     expect(mockSetNavigationMode).toHaveBeenCalledWith(2);
     expect(mockSetUpVector).toHaveBeenCalledWith(3, false);
     expect(mockFitSphereToWindow).toHaveBeenCalled();
+  });
+
+  it("loads blob model URLs with an explicit file name", async () => {
+    render(
+      <MediaFigure
+        src="blob:http://localhost/part"
+        type="model"
+        modelFileName="openpaw-tracker-case-v7.step"
+      />,
+    );
+
+    await waitFor(() => {
+      expect(mockLoadModelFromInputFiles).toHaveBeenCalledWith([
+        {
+          name: "openpaw-tracker-case-v7.step",
+          source: "url",
+          url: "blob:http://localhost/part",
+        },
+      ]);
+    });
+    expect(mockLoadModelFromUrlList).not.toHaveBeenCalled();
   });
 
   describe("displayRegion", () => {

@@ -163,11 +163,44 @@ function GripIcon() {
   );
 }
 
+function downloadFilenameFromHref(href: string): string | undefined {
+  if (!href || href === "#" || href.startsWith("blob:")) {
+    return undefined;
+  }
+
+  const path = href.replaceAll("\\", "/").split("?")[0]?.split("#")[0] ?? "";
+  const name = path.split("/").pop();
+  if (!name || name === "." || name === "..") {
+    return undefined;
+  }
+
+  try {
+    return decodeURIComponent(name);
+  } catch {
+    return name;
+  }
+}
+
+function resolveDownloadAttr(
+  href: string,
+  download?: boolean | string,
+): boolean | string | undefined {
+  if (download === undefined || download === false) {
+    return download;
+  }
+
+  if (typeof download === "string") {
+    return download || undefined;
+  }
+
+  return downloadFilenameFromHref(href) ?? true;
+}
+
 function linkAttrs(item: ReactElement<LinkButtonItemProps>) {
   const { href, download, external } = item.props;
   return {
     href,
-    download,
+    download: resolveDownloadAttr(href, download),
     ...(external ? { target: "_blank", rel: "noreferrer noopener" } : {}),
   };
 }
@@ -232,7 +265,7 @@ function LinkButtonRoot({
   const [primary, ...rest] = items;
 
   if (rest.length === 0) {
-    const primaryClass = buttonVariants({ variant: "secondary", size });
+    const primaryClass = buttonVariants({ variant: "primary", size });
     return (
       <Link {...linkAttrs(primary)} className={cn(primaryClass, className)}>
         {icon}

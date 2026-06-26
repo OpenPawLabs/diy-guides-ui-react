@@ -1,6 +1,6 @@
 {
   "name": "@openpawlabs/diy-guides-ui",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "React UI library for building open-source, iFixit-style step-by-step diy guides",
   "license": "MIT",
   "type": "module",

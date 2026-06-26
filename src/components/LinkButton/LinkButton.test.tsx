@@ -25,7 +25,7 @@ describe("LinkButton (reader)", () => {
     );
     const link = screen.getByRole("link", { name: "Download 3MF" });
     expect(link).toHaveAttribute("href", "./files/model.3mf");
-    expect(link).toHaveAttribute("download");
+    expect(link).toHaveAttribute("download", "model.3mf");
     expect(
       screen.queryByRole("button", { name: /more download options/i }),
     ).not.toBeInTheDocument();
@@ -77,6 +77,39 @@ describe("LinkButton (reader)", () => {
     const external = screen.getByRole("menuitem", { name: "View online" });
     expect(external).toHaveAttribute("target", "_blank");
     expect(external).toHaveAttribute("rel", expect.stringContaining("noreferrer"));
+  });
+
+  it("derives the download filename from absolute guide asset URLs", () => {
+    render(
+      <LinkButton>
+        <LinkButton.Item
+          href="https://docs.example.com/guides/bb-lsm6dsv/1-3d-prints/files/openpaw-tracker-case-v7.stl"
+          download
+        >
+          Download STL
+        </LinkButton.Item>
+      </LinkButton>,
+    );
+
+    expect(screen.getByRole("link", { name: "Download STL" })).toHaveAttribute(
+      "download",
+      "openpaw-tracker-case-v7.stl",
+    );
+  });
+
+  it("preserves an explicit download rename string", () => {
+    render(
+      <LinkButton>
+        <LinkButton.Item href="./files/model.stl" download="custom-name.stl">
+          Download STL
+        </LinkButton.Item>
+      </LinkButton>,
+    );
+
+    expect(screen.getByRole("link", { name: "Download STL" })).toHaveAttribute(
+      "download",
+      "custom-name.stl",
+    );
   });
 
   it("warns and renders nothing without items", () => {

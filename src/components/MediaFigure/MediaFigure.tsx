@@ -1,13 +1,9 @@
 import type { ReactNode } from "react";
 import { cn, Modal } from "@heroui/react";
-import {
-  COLORS,
-  hexToRgba,
-  markerTextColor,
-  type GuideColor,
-} from "../../types/colors";
+import type { GuideColor } from "../../types/colors";
 import type { MediaDisplayRegion } from "../../utils/mediaCrop";
-import { MediaFigureMedia } from "./MediaFigureMedia";
+import { MediaFigureAnnotationLayer } from "./MediaFigureAnnotations";
+import { MediaFigureClipFrame, MediaFigureMedia } from "./MediaFigureClipFrame";
 import { MediaFigureAnnotationEditor } from "./MediaFigureAnnotationEditor";
 
 /** Shared fields for every annotation shape. */
@@ -91,85 +87,6 @@ export interface MediaAnnotationEditing {
   onRemove?: (id: string) => void;
 }
 
-function isCircleAnnotation(
-  annotation: MediaAnnotation,
-): annotation is CircleAnnotation {
-  return annotation.type === "circle";
-}
-
-function isRectangleAnnotation(
-  annotation: MediaAnnotation,
-): annotation is RectangleAnnotation {
-  return annotation.type === "rectangle";
-}
-
-function renderAnnotation(annotation: MediaAnnotation, index: number) {
-  const key = annotation.id ?? index;
-  const color = annotation.color ?? "GREY";
-  const hex = COLORS[color];
-
-  if (isCircleAnnotation(annotation)) {
-    return (
-      <div
-        key={key}
-        role="img"
-        aria-label={annotation.title}
-        className="pointer-events-none absolute rounded-full border-2"
-        style={{
-          left: `${annotation.x}%`,
-          top: `${annotation.y}%`,
-          width: `${annotation.radius * 2}%`,
-          aspectRatio: "1",
-          transform: "translate(-50%, -50%)",
-          borderColor: hex,
-          backgroundColor: hexToRgba(hex, 0.1),
-        }}
-      />
-    );
-  }
-
-  if (isRectangleAnnotation(annotation)) {
-    const left = Math.min(annotation.x1, annotation.x2);
-    const top = Math.min(annotation.y1, annotation.y2);
-    const width = Math.abs(annotation.x2 - annotation.x1);
-    const height = Math.abs(annotation.y2 - annotation.y1);
-
-    return (
-      <div
-        key={key}
-        role="img"
-        aria-label={annotation.title}
-        className="pointer-events-none absolute border-2"
-        style={{
-          left: `${left}%`,
-          top: `${top}%`,
-          width: `${width}%`,
-          height: `${height}%`,
-          borderColor: hex,
-          backgroundColor: hexToRgba(hex, 0.1),
-        }}
-      />
-    );
-  }
-
-  return (
-    <span
-      key={key}
-      role="img"
-      aria-label={annotation.title}
-      style={{
-        left: `${annotation.x}%`,
-        top: `${annotation.y}%`,
-        backgroundColor: hex,
-        color: markerTextColor(hex),
-      }}
-      className="absolute flex min-h-6 min-w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full px-1.5 text-xs font-semibold shadow ring-2 ring-background"
-    >
-      {annotation.label}
-    </span>
-  );
-}
-
 export interface MediaFigureProps {
   /** Image, video, or 3D model source URL. */
   src: string;
@@ -199,6 +116,11 @@ export interface MediaFigureProps {
    * annotation canvas (the lightbox is disabled). Leave undefined for readers.
    */
   annotationEditing?: MediaAnnotationEditing;
+  /**
+   * Pass when the figure sits inside layout that settles after mount (e.g. modal
+   * `isOpen`) so display-region crop re-samples once the frame reaches its final size.
+   */
+  layoutSettleKey?: boolean | number | string;
   className?: string;
 }
 
@@ -219,10 +141,11 @@ export function MediaFigure({
   displayRegion,
   zoomable = true,
   annotationEditing,
+  layoutSettleKey,
   className,
 }: MediaFigureProps) {
   const frameClassName =
-    "relative aspect-[4/3] overflow-hidden rounded-lg border border-default bg-default-soft";
+    "@container relative aspect-[4/3] overflow-hidden rounded-lg border border-default bg-default-soft";
   const frame = (
     <>
       <MediaFigureMedia
@@ -230,6 +153,7 @@ export function MediaFigure({
         type={type}
         displayRegion={displayRegion}
         modelFileName={modelFileName}
+        layoutSettleKey={layoutSettleKey}
       />
       {annotationEditing ? (
         <MediaFigureAnnotationEditor
@@ -237,7 +161,7 @@ export function MediaFigure({
           editing={annotationEditing}
         />
       ) : (
-        annotations.map(renderAnnotation)
+        <MediaFigureAnnotationLayer annotations={annotations} />
       )}
     </>
   );
@@ -258,11 +182,15 @@ export function MediaFigure({
                 aria-label="Full size image"
                 className="w-auto max-w-[95vw] overflow-hidden bg-transparent p-0 shadow-none"
               >
-                <img
+                <MediaFigureClipFrame
+                  className="aspect-[4/3] max-h-[88vh] w-[min(95vw,calc(88vh*4/3))] rounded-lg border border-default bg-default-soft"
                   src={src}
-                  alt=""
-                  className="max-h-[88vh] w-auto max-w-[95vw] object-contain"
-                />
+                  type="image"
+                  displayRegion={displayRegion}
+                  remeasureWhenVisible
+                >
+                  <MediaFigureAnnotationLayer annotations={annotations} />
+                </MediaFigureClipFrame>
                 <Modal.CloseTrigger />
               </Modal.Dialog>
             </Modal.Container>

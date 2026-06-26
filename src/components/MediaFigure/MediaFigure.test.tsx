@@ -75,6 +75,9 @@ describe("MediaFigure", () => {
       />,
     );
     expect(screen.getByRole("img", { name: "Connector" })).toHaveTextContent("1");
+    expect(screen.getByRole("img", { name: "Connector" })).toHaveClass(
+      "media-figure-point-marker",
+    );
   });
 
   it("defaults omitted type to point", () => {
@@ -95,7 +98,7 @@ describe("MediaFigure", () => {
       />,
     );
     const marker = screen.getByRole("img", { name: "Heat zone" });
-    expect(marker).toHaveClass("rounded-full");
+    expect(marker).toHaveClass("rounded-full", "media-figure-shape-outline");
     expect(marker).toHaveStyle({ left: "40%", top: "60%", width: "24%" });
   });
 
@@ -124,14 +127,33 @@ describe("MediaFigure", () => {
     });
   });
 
-  it("opens a full-size lightbox when an image is clicked", async () => {
-    render(<MediaFigure src="/photo.jpg" />);
+  it("opens a lightbox with crop and annotations when an image is clicked", async () => {
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        observe() {}
+        disconnect() {}
+        unobserve() {}
+      },
+    );
+
+    render(
+      <MediaFigure
+        src="/photo.jpg"
+        displayRegion={{ x: 320, y: 90, width: 640 }}
+        annotations={[{ type: "point", x: 50, y: 50, label: 1, title: "Connector" }]}
+      />,
+    );
 
     const trigger = screen.getByRole("button", { name: "View image full size" });
     fireEvent.click(trigger);
 
     const dialog = await screen.findByRole("dialog", { name: "Full size image" });
-    expect(dialog.querySelector("img")).toHaveAttribute("src", "/photo.jpg");
+    expect(screen.getByRole("img", { name: "Connector" })).toHaveTextContent("1");
+    expect(dialog.querySelector(".aspect-\\[4\\/3\\]")).toBeInTheDocument();
+    expect(dialog.querySelector('img[src="/photo.jpg"]')).toBeInTheDocument();
+
+    vi.unstubAllGlobals();
   });
 
   it("is not zoomable when zoomable is false", () => {
@@ -358,7 +380,9 @@ describe("MediaFigure annotation editing", () => {
     firePointer("pointerdown", editor, 200, 150);
     firePointer("pointermove", editor, 204, 150); // sub-minimum drag (1% radius)
 
-    const preview = container.querySelector(".rounded-full.border-2") as HTMLElement;
+    const preview = container.querySelector(
+      ".rounded-full.media-figure-shape-outline",
+    ) as HTMLElement;
     const previewWidth = parseFloat(preview.style.width);
 
     firePointer("pointerup", editor);

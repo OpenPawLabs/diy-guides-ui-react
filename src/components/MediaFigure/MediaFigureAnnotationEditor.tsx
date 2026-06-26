@@ -16,6 +16,7 @@ import type {
   PointAnnotation,
   RectangleAnnotation,
 } from "./MediaFigure";
+import { MEDIA_FIGURE_POINT_MARKER_CLASS, MEDIA_FIGURE_SHAPE_OUTLINE_CLASS } from "./MediaFigureAnnotations";
 
 type Point = { x: number; y: number };
 type RectCorner = "nw" | "ne" | "sw" | "se";
@@ -294,7 +295,8 @@ export function MediaFigureAnnotationEditor({
             aria-label={a.title}
             onPointerDown={onDown}
             className={cn(
-              "absolute rounded-full border-2",
+              "absolute rounded-full",
+              MEDIA_FIGURE_SHAPE_OUTLINE_CLASS,
               pointer,
               selected && "outline outline-2 outline-offset-2 outline-accent",
             )}
@@ -338,7 +340,8 @@ export function MediaFigureAnnotationEditor({
             aria-label={a.title}
             onPointerDown={onDown}
             className={cn(
-              "absolute border-2",
+              "absolute",
+              MEDIA_FIGURE_SHAPE_OUTLINE_CLASS,
               pointer,
               selected && "outline outline-2 outline-offset-2 outline-accent",
             )}
@@ -378,7 +381,7 @@ export function MediaFigureAnnotationEditor({
           color: markerTextColor(hex),
         }}
         className={cn(
-          "absolute flex min-h-6 min-w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full px-1.5 text-xs font-semibold shadow ring-2 ring-background",
+          MEDIA_FIGURE_POINT_MARKER_CLASS,
           pointer,
           selected && "outline outline-2 outline-offset-2 outline-accent",
         )}

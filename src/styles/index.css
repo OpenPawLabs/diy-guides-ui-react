@@ -12,6 +12,23 @@
 
 /* GuideStep completed toggle — overrides HeroUI button/checkbox token defaults */
 @layer components {
+  /**
+   * Point annotation pin — scales with the nearest @container ancestor (MediaFigure
+   * frame or MediaFigureClipFrame).
+   */
+  .media-figure-point-marker {
+    min-width: clamp(0.625rem, 6cqw, 1.5rem);
+    min-height: clamp(0.625rem, 6cqw, 1.5rem);
+    padding-inline: clamp(0.125rem, 1.25cqw, 0.375rem);
+    font-size: clamp(0.375rem, 3.5cqw, 0.75rem);
+  }
+
+  /** Circle and rectangle annotation outlines — border-2 at thumbnail up to ~border-8 in lightbox. */
+  .media-figure-shape-outline {
+    border-style: solid;
+    border-width: clamp(2px, 1cqw, 8px);
+  }
+
   .guide-step-complete-button {
     --button-bg: var(--guide-step-complete-bg);
     --button-bg-hover: var(--guide-step-complete-bg-hover);

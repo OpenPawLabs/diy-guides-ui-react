@@ -328,6 +328,8 @@ function renderFigureThumbnail(
       <MediaFigureThumbnail
         src={figure.props.src}
         type={figure.props.type}
+        annotations={figure.props.annotations}
+        displayRegion={figure.props.displayRegion}
         className={className}
       />
     );
@@ -689,6 +691,8 @@ function GuideStepBody({
     figures.length < MAX_STEP_IMAGES;
   const showThumbs = editing ? figures.length >= 1 : figures.length > 1;
 
+  const thumbnailDims = "aspect-[4/3] w-28 sm:w-26 lg:w-30";
+
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
       <div className="min-w-0">
@@ -800,7 +804,7 @@ function GuideStepBody({
                     aria-label={`Image ${index + 1}`}
                     aria-pressed={index === activeIndex}
                   >
-                    {renderFigureThumbnail(figure, "size-16 sm:size-20")}
+                    {renderFigureThumbnail(figure, thumbnailDims)}
                   </button>
                   <button
                     type="button"
@@ -826,7 +830,7 @@ function GuideStepBody({
                   aria-label={`Image ${index + 1}`}
                   aria-pressed={index === activeIndex}
                 >
-                  {renderFigureThumbnail(figure, "size-16 sm:size-20")}
+                  {renderFigureThumbnail(figure, thumbnailDims)}
                 </button>
               ),
             )}
@@ -835,7 +839,7 @@ function GuideStepBody({
                 type="button"
                 onClick={() => mediaEditing?.onAddImage?.()}
                 aria-label="Add image"
-                className="flex size-16 items-center justify-center rounded-md border-2 border-dashed border-default text-default-500 transition hover:border-accent hover:text-accent focus-visible:border-accent focus-visible:text-accent focus-visible:outline-none sm:size-20"
+                className={cn(thumbnailDims, "flex items-center justify-center rounded-md border-2 border-dashed border-default text-default-500 transition hover:border-accent hover:text-accent focus-visible:border-accent focus-visible:text-accent focus-visible:outline-none")}
               >
                 <svg
                   aria-hidden="true"

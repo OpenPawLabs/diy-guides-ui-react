@@ -195,7 +195,9 @@ describe("GuideStep", () => {
       </GuideStep>,
     );
 
-    const thumbnails = container.querySelectorAll(".size-16 img, .sm\\:size-20 img");
+    const thumbnails = container.querySelectorAll(
+      ".aspect-\\[4\\/3\\].w-16 img, .sm\\:w-20 img",
+    );
     expect(thumbnails.length).toBeGreaterThanOrEqual(2);
     expect(thumbnails[0]).toHaveAttribute(
       "src",

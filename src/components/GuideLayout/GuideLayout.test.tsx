@@ -34,4 +34,37 @@ describe("GuideLayout", () => {
     expect(screen.getByRole("complementary")).toHaveTextContent("Tools go here");
     expect(screen.getByText("Guide overview")).toBeInTheDocument();
   });
+
+  it("renders a hero image with alt text when heroImage is provided", () => {
+    render(
+      <GuideLayout>
+        <GuideLayout.Header
+          title="Tracker Assembly"
+          heroImage="https://example.com/hero.jpg"
+          heroImageAlt="Assembled trackers on a dock"
+          difficulty="moderate"
+          timeEstimate="45 minutes"
+        />
+      </GuideLayout>,
+    );
+    const image = screen.getByRole("img", { name: "Assembled trackers on a dock" });
+    expect(image).toHaveAttribute("src", "https://example.com/hero.jpg");
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Tracker Assembly" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Moderate")).toBeInTheDocument();
+    expect(screen.getByText("45 minutes")).toBeInTheDocument();
+  });
+
+  it("does not render a hero image when heroImage is omitted", () => {
+    render(
+      <GuideLayout>
+        <GuideLayout.Header title="No Hero Guide" difficulty="easy" />
+      </GuideLayout>,
+    );
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 1, name: "No Hero Guide" }),
+    ).toBeInTheDocument();
+  });
 });

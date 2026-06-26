@@ -14,6 +14,10 @@ export interface GuideLayoutProps {
 export interface GuideLayoutHeaderProps {
   /** Guide title. */
   title: ReactNode;
+  /** Optional hero image URL — the guide's main image, shown left of the title block. */
+  heroImage?: string;
+  /** Alt text for `heroImage`. Defaults to `""` (decorative). */
+  heroImageAlt?: string;
   /** Difficulty level — rendered as a `DifficultyBadge`. */
   difficulty?: Difficulty;
   /** Time estimate text, e.g. "20 – 30 minutes". */
@@ -31,37 +35,53 @@ export interface GuideLayoutIntroProps {
 
 function GuideLayoutHeader({
   title,
+  heroImage,
+  heroImageAlt,
   difficulty,
   timeEstimate,
   meta,
   className,
 }: GuideLayoutHeaderProps) {
   const hasBadges = difficulty != null || timeEstimate != null;
+  const hasHeroImage = heroImage != null;
 
   return (
     <header
       className={cn(
         "flex flex-col gap-4 border-b border-default pb-6 md:[grid-area:header]",
+        hasHeroImage && "sm:flex-row sm:items-center sm:gap-6",
         className,
       )}
     >
-      <div className="flex flex-col gap-1.5">
-        <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-        {meta != null && (
-          <div className="text-sm text-default-500">{meta}</div>
-        )}
-      </div>
-
-      {hasBadges && (
-        <div className="flex flex-wrap items-center gap-2">
-          {difficulty != null && <DifficultyBadge difficulty={difficulty} />}
-          {timeEstimate != null && (
-            <Chip variant="soft" color="default">
-              <Chip.Label>{timeEstimate}</Chip.Label>
-            </Chip>
-          )}
+      {hasHeroImage && (
+        <div className="aspect-[4/3] h-32 shrink-0 overflow-hidden rounded-lg border border-default bg-default-100">
+          <img
+            src={heroImage}
+            alt={heroImageAlt ?? ""}
+            className="size-full object-cover"
+          />
         </div>
       )}
+
+      <div className="flex min-w-0 flex-1 flex-col gap-4">
+        <div className="flex flex-col gap-1.5">
+          <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
+          {meta != null && (
+            <div className="text-sm text-default-500">{meta}</div>
+          )}
+        </div>
+
+        {hasBadges && (
+          <div className="flex flex-wrap items-center gap-2">
+            {difficulty != null && <DifficultyBadge difficulty={difficulty} />}
+            {timeEstimate != null && (
+              <Chip variant="soft" color="default">
+                <Chip.Label>{timeEstimate}</Chip.Label>
+              </Chip>
+            )}
+          </div>
+        )}
+      </div>
     </header>
   );
 }
@@ -106,9 +126,10 @@ function GuideLayoutContent({
 }
 
 /**
- * Responsive page shell for a guide: a full-width `Header`, an intro row with
- * `Intro` (description) beside `Sidebar` (tools/parts), then full-width `Content`
- * (steps). On mobile the intro row stacks with intro first, then sidebar.
+ * Responsive page shell for a guide: a full-width `Header` (optionally with a
+ * 4:3 hero image left of the title), an intro row with `Intro` (description)
+ * beside `Sidebar` (tools/parts), then full-width `Content` (steps). On mobile
+ * the intro row stacks with intro first, then sidebar.
  */
 export const GuideLayout = Object.assign(
   function GuideLayoutRoot({ children, className }: GuideLayoutProps) {

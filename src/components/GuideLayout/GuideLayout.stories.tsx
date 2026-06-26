@@ -9,9 +9,10 @@ import { Callout } from "../Callout";
 const componentDocs = `The responsive page shell for a complete guide. It arranges four regions, each a
 compound part:
 
-- \`GuideLayout.Header\` — the title plus optional difficulty, time estimate, and a
-  byline/metadata line. Difficulty renders as a \`DifficultyBadge\` and the time
-  estimate as a chip.
+- \`GuideLayout.Header\` — the title plus optional difficulty, time estimate, a
+  byline/metadata line, and an optional 4:3 \`heroImage\` (the guide's main image,
+  shown left of the title block on desktop). Difficulty renders as a
+  \`DifficultyBadge\` and the time estimate as a chip.
 - \`GuideLayout.Intro\` — the overview paragraph(s).
 - \`GuideLayout.Sidebar\` — "what you need", typically one or two \`ToolList\`s.
 - \`GuideLayout.Content\` — the full-width body, usually a \`Callout\` and a
@@ -23,8 +24,9 @@ header, intro, sidebar, then content.
 
 ## Header props
 
-\`title\` is required; \`difficulty\`, \`timeEstimate\`, and \`meta\` are optional and
-only render when provided.`;
+\`title\` is required; \`heroImage\`, \`heroImageAlt\`, \`difficulty\`, \`timeEstimate\`, and
+\`meta\` are optional and only render when provided. On desktop the hero image sits
+left of the title block at a compact fixed height; on mobile it stacks above the title.`;
 
 const meta = {
   title: "Guide/GuideLayout",
@@ -41,6 +43,9 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
+const heroImageUrl =
+  "https://placehold.co/800x600/e2e8f0/1e293b/png?text=Guide+hero";
+
 export const FullGuide: Story = {
   parameters: {
     docs: {
@@ -55,6 +60,8 @@ export const FullGuide: Story = {
       <GuideLayout>
         <GuideLayout.Header
           title="Replace a Smartphone Battery"
+          heroImage={heroImageUrl}
+          heroImageAlt="Smartphone with rear cover removed"
           difficulty="moderate"
           timeEstimate="20 – 30 minutes"
           meta="By the DIY Guides team · Updated Jun 2026"
@@ -140,6 +147,35 @@ export const FullGuide: Story = {
             </GuideStepList>
           </div>
         </GuideLayout.Content>
+      </GuideLayout>
+    </div>
+  ),
+};
+
+export const WithHeroImage: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "The header with a compact 4:3 hero image left of the title block on desktop; on mobile it stacks above.",
+      },
+    },
+  },
+  render: () => (
+    <div className="p-6">
+      <GuideLayout>
+        <GuideLayout.Header
+          title="Tracker Assembly"
+          heroImage="https://placehold.co/800x600/dbeafe/1e40af/png?text=Assembled+trackers"
+          heroImageAlt="Assembled VR trackers on a charging dock"
+          difficulty="moderate"
+          timeEstimate="45 minutes"
+          meta="By the OpenPaw team · Updated Jun 2026"
+        />
+        <GuideLayout.Intro>
+          A quick overview of the finished build before you dive into the step-by-step
+          assembly guides.
+        </GuideLayout.Intro>
       </GuideLayout>
     </div>
   ),

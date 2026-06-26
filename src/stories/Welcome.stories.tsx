@@ -96,6 +96,8 @@ import {
 const guideExample = `<GuideLayout>
   <GuideLayout.Header
     title="Replace a Smartphone Battery"
+    heroImage="/guides/battery-hero.jpg"
+    heroImageAlt="Smartphone with rear cover removed"
     difficulty="moderate"
     timeEstimate="20-30 minutes"
     meta="Updated Jun 2026"

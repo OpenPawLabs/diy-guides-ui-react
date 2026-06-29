@@ -72,6 +72,20 @@ export type {
   GuideStepListProps,
   GuideProgress,
 } from "./components/GuideStepList";
+export {
+  guideStepUrlId,
+  parseGuideStepFromHash,
+  parseGuideStepFromSearch,
+  readGuideStepFromLocation,
+  buildGuideStepUrl,
+  type GuideStepUrlMode,
+} from "./utils/guideStepUrl";
+
+export {
+  computeGuideStepScrollMarginTop,
+  useGuideScrollMargin,
+  GuideScrollMarginContext,
+} from "./context/guideScrollMargin";
 
 export { GuideLayout } from "./components/GuideLayout";
 export type {

@@ -3,6 +3,7 @@
 import {
   Children,
   cloneElement,
+  forwardRef,
   isValidElement,
   useId,
   useState,
@@ -82,6 +83,10 @@ export interface GuideStepProps {
   mediaEditing?: GuideStepMediaEditing;
   /** Step body — requires `GuideStep.Media` (≥1 image) and `GuideStep.Bullets` (≥1 bullet). */
   children?: ReactNode;
+  /** DOM id for the step section — set automatically by `GuideStepList` when URL sync is on. */
+  id?: string;
+  /** Extra top offset when scrolling this step into view (px). */
+  scrollMarginTop?: number;
   className?: string;
 }
 
@@ -863,17 +868,22 @@ function GuideStepBody({
   );
 }
 
-function GuideStepRoot({
-  number,
-  title,
-  isCompleted,
-  defaultCompleted = false,
-  onCompletedChange,
-  completable = true,
-  mediaEditing,
-  children,
-  className,
-}: GuideStepProps) {
+const GuideStepRoot = forwardRef<HTMLElement, GuideStepProps>(function GuideStepRoot(
+  {
+    number,
+    title,
+    isCompleted,
+    defaultCompleted = false,
+    onCompletedChange,
+    completable = true,
+    mediaEditing,
+    children,
+    id,
+    scrollMarginTop,
+    className,
+  },
+  ref,
+) {
   const [completed, setCompleted] = useControlledState(
     isCompleted,
     defaultCompleted,
@@ -881,13 +891,20 @@ function GuideStepRoot({
   );
   const titleId = useId();
   const { figures, bullets } = extractStepParts(children, mediaEditing != null);
+  const sectionStyle: CSSProperties | undefined =
+    scrollMarginTop != null ? { scrollMarginTop } : undefined;
 
   return (
     <section
+      ref={ref}
+      id={id}
       aria-labelledby={title != null ? titleId : undefined}
+      data-step-number={number ?? undefined}
       data-completed={completed || undefined}
+      style={sectionStyle}
       className={cn(
         "flex flex-col gap-4 transition-opacity",
+        scrollMarginTop == null && "scroll-mt-4",
         completed && "opacity-60",
         className,
       )}
@@ -959,7 +976,7 @@ function GuideStepRoot({
       />
     </section>
   );
-}
+});
 
 /**
  * A single numbered guide step: header with number badge and optional completion

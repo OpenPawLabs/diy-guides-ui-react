@@ -74,4 +74,28 @@ describe("GuideStepList", () => {
     expect(screen.getByText("1 / 2 steps")).toBeInTheDocument();
     expect(onProgressChange).toHaveBeenLastCalledWith({ completed: 1, total: 2 });
   });
+
+  it("assigns step ids for URL sync by default", () => {
+    render(
+      <GuideStepList showProgress={false}>
+        <Step title="First" />
+        <Step title="Second" />
+      </GuideStepList>,
+    );
+
+    expect(document.getElementById("step-1")).toBeInTheDocument();
+    expect(document.getElementById("step-2")).toBeInTheDocument();
+  });
+
+  it("skips step ids when URL sync is disabled", () => {
+    render(
+      <GuideStepList showProgress={false} syncStepUrl={false}>
+        <Step title="First" />
+        <Step title="Second" />
+      </GuideStepList>,
+    );
+
+    expect(document.getElementById("step-1")).not.toBeInTheDocument();
+    expect(document.getElementById("step-2")).not.toBeInTheDocument();
+  });
 });

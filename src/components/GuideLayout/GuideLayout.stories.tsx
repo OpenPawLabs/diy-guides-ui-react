@@ -22,6 +22,12 @@ On desktop the header spans the top, the intro sits beside the sidebar, and the
 content runs full width below. On mobile everything stacks in source order:
 header, intro, sidebar, then content.
 
+## Layout props
+
+- \`stepScrollMarginTop\` — extra top scroll margin in px for fixed site chrome
+  (nav bars, etc.). Nested \`GuideStepList\`s pick this up automatically and also
+  add room for their sticky progress bar when scrolling to a step.
+
 ## Header props
 
 \`title\` is required; \`heroImage\`, \`heroImageAlt\`, \`difficulty\`, \`timeEstimate\`, and
@@ -57,7 +63,7 @@ export const FullGuide: Story = {
   },
   render: () => (
     <div className="p-6">
-      <GuideLayout>
+      <GuideLayout stepScrollMarginTop={64}>
         <GuideLayout.Header
           title="Replace a Smartphone Battery"
           heroImage={heroImageUrl}

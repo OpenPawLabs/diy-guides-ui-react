@@ -1,5 +1,8 @@
+"use client";
+
 import type { ReactNode } from "react";
 import { Chip, cn } from "@heroui/react";
+import { GuideScrollMarginContext } from "../../context/guideScrollMargin";
 import {
   DifficultyBadge,
   type Difficulty,
@@ -8,6 +11,12 @@ import {
 export interface GuideLayoutProps {
   /** `GuideLayout.Header`, `GuideLayout.Intro`, `GuideLayout.Sidebar`, and `GuideLayout.Content`. */
   children: ReactNode;
+  /**
+   * Extra top scroll margin (px) for fixed site chrome above the guide — passed
+   * to nested `GuideStepList`s so deep links land below the header.
+   * @default 0
+   */
+  stepScrollMarginTop?: number;
   className?: string;
 }
 
@@ -132,16 +141,22 @@ function GuideLayoutContent({
  * the intro row stacks with intro first, then sidebar.
  */
 export const GuideLayout = Object.assign(
-  function GuideLayoutRoot({ children, className }: GuideLayoutProps) {
+  function GuideLayoutRoot({
+    children,
+    stepScrollMarginTop = 0,
+    className,
+  }: GuideLayoutProps) {
     return (
-      <div
-        className={cn(
-          "mx-auto grid w-full max-w-6xl grid-cols-1 gap-x-8 gap-y-8 md:grid-cols-[minmax(0,1fr)_20rem] md:[grid-template-areas:'header_header'_'intro_sidebar'_'main_main']",
-          className,
-        )}
-      >
-        {children}
-      </div>
+      <GuideScrollMarginContext.Provider value={stepScrollMarginTop}>
+        <div
+          className={cn(
+            "mx-auto grid w-full max-w-6xl grid-cols-1 gap-x-8 gap-y-8 md:grid-cols-[minmax(0,1fr)_20rem] md:[grid-template-areas:'header_header'_'intro_sidebar'_'main_main']",
+            className,
+          )}
+        >
+          {children}
+        </div>
+      </GuideScrollMarginContext.Provider>
     );
   },
   {

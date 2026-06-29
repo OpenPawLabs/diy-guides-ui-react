@@ -10,12 +10,20 @@ the instructions. Drop your steps in and it:
 - **Owns completion state** — each step's starting value comes from its own
   \`defaultCompleted\` / \`isCompleted\` prop, and toggling a checkbox updates the list.
 - **Shows progress** — a bar derived from how many steps are complete.
+- **Syncs the URL** — keeps \`#step-N\` (or \`?step=N\`) aligned with the step in
+  view so readers can copy the address bar to share a deep link. Smooth-scrolls on
+  load when the URL names a step; scrolls to the top of the guide when it does not.
 
 ## Props
 
 - \`showProgress\` — toggle the progress bar (default \`true\`).
 - \`onProgressChange\` — fires with \`{ completed, total }\` whenever the count
-  changes. Use it to drive your app's own progress UI, persistence, or analytics.`;
+  changes. Use it to drive your app's own progress UI, persistence, or analytics.
+- \`syncStepUrl\` — keep the page URL aligned with the visible step (default \`true\`).
+- \`stepUrlMode\` — \`"hash"\` (\`#step-2\`) or \`"search"\` (\`?step=2\`); default \`"hash"\`.
+- \`scrollMarginTop\` — extra top inset (px) beyond \`GuideLayout.stepScrollMarginTop\` and the measured sticky progress bar.
+- \`activeStepMinVisibleRatio\` — fraction of step height that must remain visible to stay active (default \`0.2\`).
+- \`onActiveStepChange\` — fires with the visible step number, or \`null\` at the guide top.`;
 
 const meta = {
   title: "Guide/GuideStepList",

@@ -98,4 +98,42 @@ describe("GuideStepList", () => {
     expect(document.getElementById("step-1")).not.toBeInTheDocument();
     expect(document.getElementById("step-2")).not.toBeInTheDocument();
   });
+
+  it("uses controlled completion when completedSteps is provided", async () => {
+    const user = userEvent.setup();
+    const onCompletedStepsChange = vi.fn();
+    const { rerender } = render(
+      <GuideStepList
+        completedSteps={{ 1: true, 2: false }}
+        onCompletedStepsChange={onCompletedStepsChange}
+        showProgress={false}
+      >
+        <Step title="First" />
+        <Step title="Second" />
+      </GuideStepList>,
+    );
+
+    const markButtons = screen.getAllByRole("button", { name: /mark complete/i });
+    expect(markButtons[0]).toHaveAttribute("aria-pressed", "true");
+    expect(markButtons[1]).toHaveAttribute("aria-pressed", "false");
+
+    await user.click(markButtons[1]);
+
+    expect(onCompletedStepsChange).toHaveBeenCalledWith({ 1: true, 2: true });
+
+    rerender(
+      <GuideStepList
+        completedSteps={{ 1: true, 2: true }}
+        onCompletedStepsChange={onCompletedStepsChange}
+        showProgress={false}
+      >
+        <Step title="First" />
+        <Step title="Second" />
+      </GuideStepList>,
+    );
+
+    for (const button of screen.getAllByRole("button", { name: /mark complete/i })) {
+      expect(button).toHaveAttribute("aria-pressed", "true");
+    }
+  });
 });

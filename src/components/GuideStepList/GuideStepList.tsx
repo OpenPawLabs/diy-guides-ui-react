@@ -60,6 +60,13 @@ export interface GuideStepListProps {
    * to stay the active step while scrolling. @default 0.2
    */
   activeStepMinVisibleRatio?: number;
+  /**
+   * Controlled per-step completion keyed by step number. When set, the list does
+   * not keep its own completion state — use with `onCompletedStepsChange`.
+   */
+  completedSteps?: Record<number, boolean>;
+  /** Fires when any step completion changes (controlled mode). */
+  onCompletedStepsChange?: (completedSteps: Record<number, boolean>) => void;
   className?: string;
 }
 
@@ -82,6 +89,8 @@ export function GuideStepList({
   onActiveStepChange,
   scrollMarginTop: additionalParentScrollMarginTop = 0,
   activeStepMinVisibleRatio = 0.2,
+  completedSteps: controlledCompletedSteps,
+  onCompletedStepsChange,
   className,
 }: GuideStepListProps) {
   const steps = Children.toArray(children).filter(isStepElement);
@@ -137,17 +146,34 @@ export function GuideStepList({
     (step, index) => step.props.number ?? index + 1,
   );
 
-  const [completed, setCompleted] = useState<Record<number, boolean>>(() =>
-    Object.fromEntries(
-      steps.map((step, index) => {
-        const number = step.props.number ?? index + 1;
-        return [
-          number,
-          Boolean(step.props.defaultCompleted ?? step.props.isCompleted),
-        ];
-      }),
-    ),
+  const [internalCompleted, setInternalCompleted] = useState<Record<number, boolean>>(
+    () =>
+      Object.fromEntries(
+        steps.map((step, index) => {
+          const number = step.props.number ?? index + 1;
+          return [
+            number,
+            Boolean(step.props.defaultCompleted ?? step.props.isCompleted),
+          ];
+        }),
+      ),
   );
+
+  const isCompletionControlled = controlledCompletedSteps != null;
+  const completed = isCompletionControlled
+    ? controlledCompletedSteps
+    : internalCompleted;
+
+  const setStepCompleted = (number: number, value: boolean) => {
+    const next = { ...completed, [number]: value };
+
+    if (isCompletionControlled) {
+      onCompletedStepsChange?.(next);
+      return;
+    }
+
+    setInternalCompleted(next);
+  };
 
   const completedCount = Object.values(completed).filter(Boolean).length;
 
@@ -211,7 +237,7 @@ export function GuideStepList({
                 scrollMarginTop: syncStepUrl ? stepScrollMarginTop : undefined,
                 isCompleted: completed[number] ?? false,
                 onCompletedChange: (value: boolean) => {
-                  setCompleted((prev) => ({ ...prev, [number]: value }));
+                  setStepCompleted(number, value);
                   step.props.onCompletedChange?.(value);
                 },
               })}

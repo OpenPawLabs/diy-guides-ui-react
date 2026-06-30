@@ -34,13 +34,16 @@ const COMPLETE_CHECKBOX_GREEN = "#0B7A47";
  * Optional, editor-only media affordances. Presence switches `GuideStep.Media`
  * into edit mode: an empty-state add target, an "Edit annotations" / "Adjust crop"
  * overlay on the main image, a remove control per thumbnail, a "+" tile to append,
- * and (with `onReorderImage`) drag-to-reorder thumbnails. All members are intent
+ * and (with `onReorderImage`) drag-to-reorder thumbnails. When `onAddMediaFiles` is
+ * set, the empty target and "+" tile also accept file drag-and-drop. All members are intent
  * callbacks — the library performs no file or menu logic. Omit entirely for the
  * read-only reader experience.
  */
 export interface GuideStepMediaEditing {
   /** Append a new image (e.g. open a file picker). Drives the empty target and "+" tile. */
   onAddImage?: () => void;
+  /** Files dropped onto an add target (empty frame or "+" tile). */
+  onAddMediaFiles?: (files: File[]) => void;
   /** Edit annotations for the image at `index` (fired from the main image overlay). */
   onEditAnnotations?: (index: number) => void;
   /**
@@ -651,6 +654,36 @@ function StepCheck() {
   );
 }
 
+function useMediaFileDropTarget(onAddMediaFiles?: (files: File[]) => void) {
+  const [isDropOver, setIsDropOver] = useState(false);
+
+  const dropProps = onAddMediaFiles
+    ? {
+        onDragOver: (event: React.DragEvent) => {
+          if (!event.dataTransfer.types.includes("Files")) return;
+          event.preventDefault();
+          event.dataTransfer.dropEffect = "copy";
+          setIsDropOver(true);
+        },
+        onDragLeave: (event: React.DragEvent) => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node)) {
+            setIsDropOver(false);
+          }
+        },
+        onDrop: (event: React.DragEvent) => {
+          event.preventDefault();
+          setIsDropOver(false);
+          const files = Array.from(event.dataTransfer.files);
+          if (files.length > 0) {
+            onAddMediaFiles(files);
+          }
+        },
+      }
+    : {};
+
+  return { isDropOver, dropProps };
+}
+
 function GuideStepBody({
   figures,
   bullets,
@@ -696,7 +729,11 @@ function GuideStepBody({
     figures.length < MAX_STEP_IMAGES;
   const showThumbs = editing ? figures.length >= 1 : figures.length > 1;
 
-  const thumbnailDims = "aspect-[4/3] w-28 sm:w-26 lg:w-30";
+  const thumbnailDims = "aspect-[4/3] w-full min-w-0";
+  const emptyDrop = useMediaFileDropTarget(mediaEditing?.onAddMediaFiles);
+  const addTileDrop = useMediaFileDropTarget(mediaEditing?.onAddMediaFiles);
+  const addTargetDropOverClass =
+    "border-accent text-accent ring-2 ring-accent ring-offset-2 ring-offset-background";
 
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -741,10 +778,16 @@ function GuideStepBody({
             <button
               type="button"
               onClick={() => mediaEditing?.onAddImage?.()}
-              className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-default bg-default-soft text-default-500 transition hover:border-accent hover:text-accent focus-visible:border-accent focus-visible:text-accent focus-visible:outline-none"
+              {...emptyDrop.dropProps}
+              className={cn(
+                "flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-default bg-default-soft text-default-500 transition hover:border-accent hover:text-accent focus-visible:border-accent focus-visible:text-accent focus-visible:outline-none",
+                emptyDrop.isDropOver && addTargetDropOverClass,
+              )}
             >
               <UploadIcon />
-              <span className="text-sm font-medium">Add image</span>
+              <span className="text-sm font-medium">
+                {emptyDrop.isDropOver ? "Drop image" : "Add image"}
+              </span>
             </button>
           )
         )}
@@ -753,7 +796,7 @@ function GuideStepBody({
       <div className="flex min-w-0 flex-col gap-4">
         {(showThumbs || canAdd) && (
           <div
-            className="flex flex-wrap gap-2"
+            className="grid w-full grid-cols-3 gap-2"
             role="group"
             aria-label="Step images"
           >
@@ -762,7 +805,7 @@ function GuideStepBody({
                 <div
                   key={figure.key ?? figure.props.src ?? index}
                   className={cn(
-                    "relative rounded-md transition-shadow",
+                    "relative min-w-0 w-full rounded-md transition-shadow",
                     canReorder && "cursor-grab",
                     dragIndex === index && "opacity-40",
                     overIndex === index &&
@@ -800,7 +843,7 @@ function GuideStepBody({
                   <button
                     type="button"
                     className={cn(
-                      "block overflow-hidden rounded-md border-2 transition-[box-shadow,opacity,border-color]",
+                      "block w-full overflow-hidden rounded-md border-2 transition-[box-shadow,opacity,border-color]",
                       index === activeIndex
                         ? "border-accent shadow-md"
                         : "border-default opacity-80 hover:opacity-100",
@@ -825,7 +868,7 @@ function GuideStepBody({
                   key={figure.key ?? figure.props.src ?? index}
                   type="button"
                   className={cn(
-                    "overflow-hidden rounded-md border-2 transition-[box-shadow,opacity,border-color]",
+                    "w-full overflow-hidden rounded-md border-2 transition-[box-shadow,opacity,border-color]",
                     index === activeIndex
                       ? "border-accent shadow-md"
                       : "border-default opacity-80 hover:opacity-100",
@@ -844,7 +887,12 @@ function GuideStepBody({
                 type="button"
                 onClick={() => mediaEditing?.onAddImage?.()}
                 aria-label="Add image"
-                className={cn(thumbnailDims, "flex items-center justify-center rounded-md border-2 border-dashed border-default text-default-500 transition hover:border-accent hover:text-accent focus-visible:border-accent focus-visible:text-accent focus-visible:outline-none")}
+                {...addTileDrop.dropProps}
+                className={cn(
+                  thumbnailDims,
+                  "flex items-center justify-center rounded-md border-2 border-dashed border-default text-default-500 transition hover:border-accent hover:text-accent focus-visible:border-accent focus-visible:text-accent focus-visible:outline-none",
+                  addTileDrop.isDropOver && addTargetDropOverClass,
+                )}
               >
                 <svg
                   aria-hidden="true"

@@ -64,7 +64,7 @@ export const FullGuide: Story = {
   },
   render: () => (
     <div className="p-6">
-      <GuideLayout scrollMarginTop={64}>
+      <GuideLayout scrollMarginTop={8}>
         <GuideLayout.Header
           title="Replace a Smartphone Battery"
           heroImage={heroImageUrl}

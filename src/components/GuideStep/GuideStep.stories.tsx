@@ -64,9 +64,10 @@ that component.
 
 \`GuideStep\` is presentational by default. Three optional, off-by-default props let an
 external editor drive it without changing reader output. Pass \`mediaEditing\` to make
-the media area editable — an empty add target, click-to-annotate on the main image, a
+the media area editable — an empty add target (click or drag-and-drop files when
+\`onAddMediaFiles\` is set), click-to-annotate on the main image, a
 remove control per thumbnail, drag-to-reorder thumbnails (when \`onReorderImage\` is set),
-and a "+" tile to append (up to three). Pass \`editing\` to \`GuideStep.Bullets\` to manage
+and a "+" tile to append (up to three; also accepts file drops when \`onAddMediaFiles\` is set). Pass \`editing\` to \`GuideStep.Bullets\` to manage
 the bullet list — a drag handle to reorder (when \`onReorderBullet\` is set and more than
 one bullet exists), a remove control per bullet (hidden on the last remaining bullet), and
 a "+ New bullet" button. Pass \`onMarkerPress\` on a \`GuideStep.Bullet\` to turn its marker
@@ -129,7 +130,7 @@ export const MultipleImages: Story = {
     docs: {
       description: {
         story:
-          "Add up to three `MediaFigure`s to `GuideStep.Media`. The first is the main view; the others become thumbnails — hover or focus one to swap it in.",
+          "Add up to three `MediaFigure`s to `GuideStep.Media`. The first is the main view; the others become thumbnails in a three-column row that scales with the column width — hover or focus one to swap it in.",
       },
     },
   },
@@ -362,7 +363,7 @@ export const EditingAffordances: Story = {
     docs: {
       description: {
         story:
-          "Optional, editor-only affordances. Passing `mediaEditing` turns the media area into an editor (empty add target, an \"Edit annotations\" / \"Adjust crop\" overlay on the main image, a remove control per thumbnail, drag-to-reorder thumbnails, and a \"+\" tile). Passing `editing` to `GuideStep.Bullets` manages the bullet list — drag a bullet's grip to reorder, remove with the x, or append with \"+ New bullet\". Passing `onMarkerPress` on a bullet turns its marker into a button — here it cycles the dot color. These are off by default, so the reader output is unchanged.",
+          "Optional, editor-only affordances. Passing `mediaEditing` turns the media area into an editor (empty add target, an \"Edit annotations\" / \"Adjust crop\" overlay on the main image, a remove control per thumbnail, drag-to-reorder thumbnails, and a \"+\" tile — the empty target and \"+\" tile accept file drag-and-drop when `onAddMediaFiles` is set). Passing `editing` to `GuideStep.Bullets` manages the bullet list — drag a bullet's grip to reorder, remove with the x, or append with \"+ New bullet\". Passing `onMarkerPress` on a bullet turns its marker into a button — here it cycles the dot color. These are off by default, so the reader output is unchanged.",
       },
     },
   },

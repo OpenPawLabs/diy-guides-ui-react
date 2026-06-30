@@ -9,6 +9,14 @@ const stepPhoto = {
   src: "https://placehold.co/800x600/png?text=Step",
 } as const;
 
+function fileDataTransfer(file: File) {
+  return {
+    types: ["Files"],
+    dropEffect: "",
+    files: [file],
+  };
+}
+
 describe("GuideStep", () => {
   it("renders the number badge, title, and bullets", () => {
     render(
@@ -183,7 +191,7 @@ describe("GuideStep", () => {
     }
     PreviewMediaFigure[mediaFigureType] = true;
 
-    const { container } = render(
+    render(
       <GuideStep number={1} title="Multi image step">
         <GuideStep.Media>
           <PreviewMediaFigure src="https://placehold.co/800x600/png?text=Image+1" />
@@ -195,9 +203,9 @@ describe("GuideStep", () => {
       </GuideStep>,
     );
 
-    const thumbnails = container.querySelectorAll(
-      ".aspect-\\[4\\/3\\].w-28 img, .sm\\:w-26 img",
-    );
+    const gallery = screen.getByRole("group", { name: "Step images" });
+    expect(gallery).toHaveClass("grid-cols-3");
+    const thumbnails = gallery.querySelectorAll(".aspect-\\[4\\/3\\] img");
     expect(thumbnails.length).toBeGreaterThanOrEqual(2);
     expect(thumbnails[0]).toHaveAttribute(
       "src",
@@ -372,6 +380,89 @@ describe("GuideStep editing affordances", () => {
     );
     await user.click(screen.getByRole("button", { name: /add image/i }));
     expect(onAddImage).toHaveBeenCalledTimes(1);
+  });
+
+  it("fires onAddMediaFiles when files are dropped on the empty add target", async () => {
+    const user = userEvent.setup();
+    const onAddImage = vi.fn();
+    const onAddMediaFiles = vi.fn();
+    const file = new File(["pixels"], "photo.png", { type: "image/png" });
+    render(
+      <GuideStep
+        number={1}
+        title="New step"
+        completable={false}
+        mediaEditing={{ onAddImage, onAddMediaFiles }}
+      >
+        <GuideStep.Media />
+        <GuideStep.Bullets>
+          <GuideStep.Bullet>Instruction.</GuideStep.Bullet>
+        </GuideStep.Bullets>
+      </GuideStep>,
+    );
+
+    const addTarget = screen.getByRole("button", { name: /add image/i });
+    const dataTransfer = fileDataTransfer(file);
+    fireEvent.dragOver(addTarget, { dataTransfer });
+    fireEvent.drop(addTarget, { dataTransfer });
+
+    expect(onAddMediaFiles).toHaveBeenCalledWith([file]);
+    expect(onAddImage).not.toHaveBeenCalled();
+
+    await user.click(addTarget);
+    expect(onAddImage).toHaveBeenCalledTimes(1);
+  });
+
+  it("fires onAddMediaFiles when files are dropped on the gallery add tile", () => {
+    const onAddMediaFiles = vi.fn();
+    const file = new File(["pixels"], "photo.png", { type: "image/png" });
+    render(
+      <GuideStep
+        number={1}
+        title="Gallery"
+        completable={false}
+        mediaEditing={{ onAddMediaFiles }}
+      >
+        <GuideStep.Media>
+          <MediaFigure src="https://placehold.co/800x600/png?text=Image+1" />
+        </GuideStep.Media>
+        <GuideStep.Bullets>
+          <GuideStep.Bullet>Follow the view.</GuideStep.Bullet>
+        </GuideStep.Bullets>
+      </GuideStep>,
+    );
+
+    const gallery = screen.getByRole("group", { name: "Step images" });
+    const addTile = within(gallery).getByRole("button", { name: "Add image" });
+    const dataTransfer = fileDataTransfer(file);
+    fireEvent.dragOver(addTile, { dataTransfer });
+    fireEvent.drop(addTile, { dataTransfer });
+
+    expect(onAddMediaFiles).toHaveBeenCalledWith([file]);
+  });
+
+  it("ignores file drops on add targets when onAddMediaFiles is omitted", () => {
+    const onAddImage = vi.fn();
+    const file = new File(["pixels"], "photo.png", { type: "image/png" });
+    render(
+      <GuideStep
+        number={1}
+        title="New step"
+        completable={false}
+        mediaEditing={{ onAddImage }}
+      >
+        <GuideStep.Media />
+        <GuideStep.Bullets>
+          <GuideStep.Bullet>Instruction.</GuideStep.Bullet>
+        </GuideStep.Bullets>
+      </GuideStep>,
+    );
+
+    const addTarget = screen.getByRole("button", { name: /add image/i });
+    const dataTransfer = fileDataTransfer(file);
+    fireEvent.drop(addTarget, { dataTransfer });
+
+    expect(onAddImage).not.toHaveBeenCalled();
   });
 
   it("does not warn about missing media when mediaEditing is active", () => {

@@ -1,12 +1,20 @@
 "use client";
 
-import { createContext, useContext } from "react";
+import { createContext, useContext, type RefObject } from "react";
 
 /** Extra top scroll margin (px) supplied by a page shell such as `GuideLayout`. */
 export const GuideScrollMarginContext = createContext(0);
 
+/** Scroll anchor for the guide overview — set by `GuideLayout` on its root element. */
+export const GuideTopRefContext =
+  createContext<RefObject<HTMLElement | null> | null>(null);
+
 export function useGuideScrollMargin(): number {
   return useContext(GuideScrollMarginContext);
+}
+
+export function useGuideTopRef(): RefObject<HTMLElement | null> | null {
+  return useContext(GuideTopRefContext);
 }
 
 /** Tailwind `scroll-mt-4` — baseline breathing room below the scroll anchor. */

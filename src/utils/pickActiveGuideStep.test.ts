@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   getStepVisibleRatio,
+  isGuideOverviewVisible,
   pickActiveGuideStep,
+  shouldClearGuideStepFromUrl,
 } from "./pickActiveGuideStep";
 
 describe("pickActiveGuideStep", () => {
@@ -49,5 +51,45 @@ describe("pickActiveGuideStep", () => {
     expect(
       pickActiveGuideStep([2, 3], 0.2, (step) => elements.get(step) ?? null, 800),
     ).toBe(3);
+  });
+});
+
+describe("isGuideOverviewVisible", () => {
+  it("is true when the guide top anchor is aligned below the scroll margin", () => {
+    expect(isGuideOverviewVisible({ top: 16, bottom: 400, height: 384 } as DOMRect, 64)).toBe(
+      true,
+    );
+  });
+
+  it("is false once the overview has scrolled past the anchor line", () => {
+    expect(isGuideOverviewVisible({ top: -40, bottom: 300, height: 340 } as DOMRect, 64)).toBe(
+      false,
+    );
+  });
+});
+
+describe("shouldClearGuideStepFromUrl", () => {
+  it("clears the step when the overview is visible and the first step barely peeks", () => {
+    expect(
+      shouldClearGuideStepFromUrl({
+        guideTopRect: { top: 0, bottom: 500, height: 500 } as DOMRect,
+        firstStepRect: { top: 880, bottom: 1080, height: 200 } as DOMRect,
+        scrollMarginTop: 64,
+        activeStepMinVisibleRatio: 0.2,
+        innerHeight: 900,
+      }),
+    ).toBe(true);
+  });
+
+  it("keeps the step when the first step is meaningfully in view on a short page", () => {
+    expect(
+      shouldClearGuideStepFromUrl({
+        guideTopRect: { top: 0, bottom: 300, height: 300 } as DOMRect,
+        firstStepRect: { top: 320, bottom: 520, height: 200 } as DOMRect,
+        scrollMarginTop: 0,
+        activeStepMinVisibleRatio: 0.2,
+        innerHeight: 900,
+      }),
+    ).toBe(false);
   });
 });

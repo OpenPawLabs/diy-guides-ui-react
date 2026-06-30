@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useRef, type RefObject } from "react";
-import { pickActiveGuideStep } from "../utils/pickActiveGuideStep";
+import {
+  pickActiveGuideStep,
+  shouldClearGuideStepFromUrl,
+} from "../utils/pickActiveGuideStep";
 import {
   buildGuideStepUrl,
   guideStepUrlId,
@@ -9,6 +12,8 @@ import {
 export interface UseGuideStepUrlSyncOptions {
   enabled: boolean;
   rootRef: RefObject<HTMLElement | null>;
+  /** Overview anchor from `GuideLayout` — used when the URL has no step. */
+  guideTopRef?: RefObject<HTMLElement | null> | null;
   stepNumbers: number[];
   mode?: GuideStepUrlMode;
   stepUrlKey?: string;
@@ -49,6 +54,7 @@ function pickActiveStep(
 export function useGuideStepUrlSync({
   enabled,
   rootRef,
+  guideTopRef = null,
   stepNumbers,
   mode = "hash",
   stepUrlKey = "step",
@@ -99,7 +105,9 @@ export function useGuideStepUrlSync({
       }
 
       const target =
-        step != null ? getStepElement(step) : rootRef.current;
+        step != null
+          ? getStepElement(step)
+          : (guideTopRef?.current ?? rootRef.current);
 
       if (target == null) {
         return;
@@ -118,7 +126,7 @@ export function useGuideStepUrlSync({
         scrollTimerRef.current = null;
       }, SCROLL_SETTLE_MS);
     },
-    [rootRef, setActiveStep],
+    [guideTopRef, rootRef, setActiveStep],
   );
 
   const scrollFromUrl = useCallback(() => {
@@ -128,8 +136,7 @@ export function useGuideStepUrlSync({
 
     const step = readGuideStepFromLocation(window.location, mode, stepUrlKey);
     scrollToStep(step);
-    setActiveStep(step, { updateUrl: false });
-  }, [mode, scrollToStep, setActiveStep, stepUrlKey]);
+  }, [mode, scrollToStep, stepUrlKey]);
 
   useEffect(() => {
     if (!enabled || typeof window === "undefined" || didInitialScrollRef.current) {
@@ -197,10 +204,30 @@ export function useGuideStepUrlSync({
         return;
       }
 
+      const firstStep = stepNumbers[0];
+      const guideTopRect = guideTopRef?.current?.getBoundingClientRect() ?? null;
+      const firstStepRect =
+        firstStep != null
+          ? getStepElement(firstStep)?.getBoundingClientRect() ?? null
+          : null;
+
+      if (
+        shouldClearGuideStepFromUrl({
+          guideTopRect,
+          firstStepRect,
+          scrollMarginTop,
+          activeStepMinVisibleRatio,
+        })
+      ) {
+        setActiveStep(null, { updateUrl: true });
+        return;
+      }
+
       const active = pickActiveStep(
         stepNumbers,
         activeStepMinVisibleRatio,
-      );      setActiveStep(active, { updateUrl: true });
+      );
+      setActiveStep(active, { updateUrl: true });
     };
 
     const observer = new IntersectionObserver(updateActiveFromScroll, {
@@ -224,6 +251,7 @@ export function useGuideStepUrlSync({
   }, [
     activeStepMinVisibleRatio,
     enabled,
+    guideTopRef,
     scrollMarginTop,
     setActiveStep,
     stepNumbers.join(","),

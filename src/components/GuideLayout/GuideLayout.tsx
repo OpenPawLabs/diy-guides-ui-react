@@ -1,8 +1,11 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 import { Chip, cn } from "@heroui/react";
-import { GuideScrollMarginContext } from "../../context/guideScrollMargin";
+import {
+  GuideScrollMarginContext,
+  GuideTopRefContext,
+} from "../../context/guideScrollMargin";
 import {
   DifficultyBadge,
   type Difficulty,
@@ -146,17 +149,22 @@ export const GuideLayout = Object.assign(
     stepScrollMarginTop = 0,
     className,
   }: GuideLayoutProps) {
+    const guideTopRef = useRef<HTMLDivElement>(null);
+
     return (
-      <GuideScrollMarginContext.Provider value={stepScrollMarginTop}>
-        <div
-          className={cn(
-            "mx-auto grid w-full max-w-6xl grid-cols-1 gap-x-8 gap-y-8 md:grid-cols-[minmax(0,1fr)_20rem] md:[grid-template-areas:'header_header'_'intro_sidebar'_'main_main']",
-            className,
-          )}
-        >
-          {children}
-        </div>
-      </GuideScrollMarginContext.Provider>
+      <GuideTopRefContext.Provider value={guideTopRef}>
+        <GuideScrollMarginContext.Provider value={stepScrollMarginTop}>
+          <div
+            ref={guideTopRef}
+            className={cn(
+              "mx-auto grid w-full max-w-6xl grid-cols-1 gap-x-8 gap-y-8 md:grid-cols-[minmax(0,1fr)_20rem] md:[grid-template-areas:'header_header'_'intro_sidebar'_'main_main']",
+              className,
+            )}
+          >
+            {children}
+          </div>
+        </GuideScrollMarginContext.Provider>
+      </GuideTopRefContext.Provider>
     );
   },
   {

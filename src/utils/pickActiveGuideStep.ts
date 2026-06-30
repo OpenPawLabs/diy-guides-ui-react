@@ -58,3 +58,42 @@ export function pickActiveGuideStep(
 
   return null;
 }
+
+/** Whether the guide overview anchor is aligned with the top of the viewport. */
+export function isGuideOverviewVisible(
+  anchorRect: DOMRect | null,
+  scrollMarginTop: number,
+): boolean {
+  if (anchorRect == null) {
+    return false;
+  }
+
+  return anchorRect.top >= -4 && anchorRect.top <= scrollMarginTop + 4;
+}
+
+/** True when the reader is back at the guide overview — no step should be in the URL. */
+export function shouldClearGuideStepFromUrl({
+  guideTopRect,
+  firstStepRect,
+  scrollMarginTop,
+  activeStepMinVisibleRatio,
+  innerHeight = window.innerHeight,
+}: {
+  guideTopRect: DOMRect | null;
+  firstStepRect: DOMRect | null;
+  scrollMarginTop: number;
+  activeStepMinVisibleRatio: number;
+  innerHeight?: number;
+}): boolean {
+  if (!isGuideOverviewVisible(guideTopRect, scrollMarginTop)) {
+    return false;
+  }
+
+  if (firstStepRect == null) {
+    return true;
+  }
+
+  return (
+    getStepVisibleRatio(firstStepRect, innerHeight) < activeStepMinVisibleRatio
+  );
+}

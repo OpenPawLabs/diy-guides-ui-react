@@ -15,6 +15,7 @@ import { Card, ProgressBar, Separator, cn } from "@heroui/react";
 import {
   computeGuideStepScrollMarginTop,
   useGuideScrollMargin,
+  useGuideTopRef,
 } from "../../context/guideScrollMargin";
 import { useGuideStepUrlSync } from "../../hooks/useGuideStepUrlSync";
 import { useElementSize } from "../../hooks/useElementSize";
@@ -90,6 +91,7 @@ export function GuideStepList({
   });
 
   const siteScrollMarginTop = useGuideScrollMargin();
+  const guideTopRef = useGuideTopRef();
 
   const stepScrollMarginTop = useMemo(
     () =>
@@ -133,6 +135,7 @@ export function GuideStepList({
   useGuideStepUrlSync({
     enabled: syncStepUrl,
     rootRef,
+    guideTopRef,
     stepNumbers,
     mode: stepUrlMode,
     stepUrlKey,

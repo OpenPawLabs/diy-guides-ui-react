@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, type RefObject } from "react";
 import {
   getOverviewRect,
+  isAtPageBottom,
   pickActiveGuideSection,
 } from "../utils/pickActiveGuideStep";
 import {
@@ -249,6 +250,7 @@ export function useGuideStepUrlSync({
         getStepRect: (step) => getStepElement(step)?.getBoundingClientRect() ?? null,
         activeStepMinVisibleRatio,
         stepContentInsetTop: scrollMarginTop,
+        atPageBottom: isAtPageBottom(),
       });
       setActiveStep(active, { updateUrl: true });
     };
@@ -271,11 +273,28 @@ export function useGuideStepUrlSync({
       }
     }
 
+    let scrollRaf = 0;
+    const handleScroll = () => {
+      if (scrollRaf !== 0) {
+        return;
+      }
+
+      scrollRaf = window.requestAnimationFrame(() => {
+        scrollRaf = 0;
+        updateActiveFromScroll();
+      });
+    };
+
     syncActiveFromScrollRef.current = updateActiveFromScroll;
     updateActiveFromScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
 
     return () => {
       syncActiveFromScrollRef.current = null;
+      window.removeEventListener("scroll", handleScroll);
+      if (scrollRaf !== 0) {
+        window.cancelAnimationFrame(scrollRaf);
+      }
       observer.disconnect();
     };
   }, [

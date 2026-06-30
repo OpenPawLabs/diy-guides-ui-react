@@ -54,6 +54,7 @@ function SyncHarness({
 function mockRects(rects: {
   guideTop?: Partial<DOMRect>;
   guideContent?: Partial<DOMRect>;
+  guideRoot?: Partial<DOMRect>;
   steps?: Record<number, Partial<DOMRect>>;
 }) {
   const guideTopRect = {
@@ -82,6 +83,23 @@ function mockRects(rects: {
     ...rects.guideContent,
   } as DOMRect;
 
+  const guideRootRect =
+    rects.guideRoot != null &&
+    typeof (rects.guideRoot as DOMRect).toJSON === "function"
+      ? (rects.guideRoot as DOMRect)
+      : ({
+          top: guideTopRect.bottom,
+          bottom: guideTopRect.bottom,
+          left: 0,
+          right: 0,
+          width: 0,
+          height: 0,
+          x: 0,
+          y: guideTopRect.bottom,
+          toJSON: () => ({}),
+          ...rects.guideRoot,
+        } as DOMRect);
+
   const stepRects = new Map(
     Object.entries(rects.steps ?? {}).map(([step, rect]) => [
       Number(step),
@@ -109,6 +127,10 @@ function mockRects(rects: {
 
     if (this.dataset.testid === "guide-content") {
       return guideContentRect;
+    }
+
+    if (this.dataset.testid === "guide-root") {
+      return guideRootRect;
     }
 
     const stepMatch = this.id.match(/^step-(\d+)$/);
@@ -161,6 +183,24 @@ describe("useGuideStepUrlSync", () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    Object.defineProperty(document.documentElement, "scrollHeight", {
+      configurable: true,
+      value: 0,
+    });
+    Object.defineProperty(document.body, "scrollHeight", {
+      configurable: true,
+      value: 0,
+    });
+    Object.defineProperty(window, "scrollY", {
+      configurable: true,
+      value: 0,
+      writable: true,
+    });
+    Object.defineProperty(window, "innerHeight", {
+      configurable: true,
+      value: 768,
+      writable: true,
+    });
   });
 
   it("smooth-scrolls to the guide overview when no step is in the URL", async () => {
@@ -361,5 +401,162 @@ describe("useGuideStepUrlSync", () => {
     );
 
     vi.useRealTimers();
+  });
+
+  it("keeps the final step in the URL after navigating to it directly", async () => {
+    vi.useFakeTimers();
+    const replaceState = vi
+      .spyOn(window.history, "replaceState")
+      .mockImplementation(() => {});
+
+    window.location.hash = "#step-2";
+    window.location.href = "https://example.com/guide#step-2";
+
+    mockRects({
+      guideTop: { top: -500, bottom: -100, height: 400 },
+      guideContent: { top: -100, bottom: -100, height: 0 },
+      steps: {
+        1: { top: 200, bottom: 500, height: 300 },
+        2: { top: 144, bottom: 344, height: 200 },
+      },
+    });
+
+    render(
+      <SyncHarness
+        overviewScrollMarginTop={64}
+        scrollMarginTop={144}
+        stepNumbers={[1, 2]}
+      />,
+    );
+
+    await vi.advanceTimersByTimeAsync(901);
+    intersectionCallback?.();
+
+    expect(replaceState).not.toHaveBeenCalledWith(
+      window.history.state,
+      "",
+      "https://example.com/guide#step-1",
+    );
+
+    vi.useRealTimers();
+  });
+
+  it("syncs the final step when the reader scrolls to the page bottom", async () => {
+    vi.useFakeTimers();
+    const replaceState = vi
+      .spyOn(window.history, "replaceState")
+      .mockImplementation(() => {});
+
+    Object.defineProperty(document.documentElement, "scrollHeight", {
+      configurable: true,
+      value: 2000,
+    });
+    Object.defineProperty(document.body, "scrollHeight", {
+      configurable: true,
+      value: 2000,
+    });
+    Object.defineProperty(window, "scrollY", {
+      configurable: true,
+      value: 1100,
+      writable: true,
+    });
+    Object.defineProperty(window, "innerHeight", {
+      configurable: true,
+      value: 900,
+      writable: true,
+    });
+
+    mockRects({
+      guideTop: { top: -800, bottom: -400, height: 400 },
+      guideContent: { top: -400, bottom: -400, height: 0 },
+      steps: {
+        1: { top: 200, bottom: 500, height: 300 },
+        2: { top: 520, bottom: 720, height: 200 },
+      },
+    });
+
+    render(
+      <SyncHarness
+        overviewScrollMarginTop={64}
+        scrollMarginTop={144}
+        stepNumbers={[1, 2]}
+      />,
+    );
+
+    await vi.advanceTimersByTimeAsync(901);
+    intersectionCallback?.();
+
+    expect(replaceState).toHaveBeenCalledWith(
+      window.history.state,
+      "",
+      "https://example.com/guide#step-2",
+    );
+
+    vi.useRealTimers();
+  });
+
+  it("syncs the final step from a scroll event when the page bottom is reached", async () => {
+    const replaceState = vi
+      .spyOn(window.history, "replaceState")
+      .mockImplementation(() => {});
+
+    Object.defineProperty(document.documentElement, "scrollHeight", {
+      configurable: true,
+      value: 2000,
+    });
+    Object.defineProperty(document.body, "scrollHeight", {
+      configurable: true,
+      value: 2000,
+    });
+    Object.defineProperty(window, "innerHeight", {
+      configurable: true,
+      value: 900,
+      writable: true,
+    });
+    Object.defineProperty(window, "scrollY", {
+      configurable: true,
+      value: 0,
+      writable: true,
+    });
+
+    mockRects({
+      guideTop: { top: -800, bottom: -400, height: 400 },
+      guideContent: { top: -400, bottom: -400, height: 0 },
+      steps: {
+        1: { top: 200, bottom: 500, height: 300 },
+        2: { top: 520, bottom: 720, height: 200 },
+      },
+    });
+
+    render(
+      <SyncHarness
+        overviewScrollMarginTop={64}
+        scrollMarginTop={144}
+        stepNumbers={[1, 2]}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(scrollTo).toHaveBeenCalled();
+    });
+
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, 950);
+    });
+    replaceState.mockClear();
+
+    Object.defineProperty(window, "scrollY", {
+      configurable: true,
+      value: 1100,
+      writable: true,
+    });
+    window.dispatchEvent(new Event("scroll"));
+    await waitFor(() => {
+      expect(replaceState).toHaveBeenCalledWith(
+        window.history.state,
+        "",
+        "https://example.com/guide#step-2",
+      );
+    });
   });
 });

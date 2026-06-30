@@ -46,6 +46,57 @@ export function getOverviewRect(
   } as DOMRect;
 }
 
+function getPageScrollTop(): number {
+  if (typeof window === "undefined") {
+    return 0;
+  }
+
+  return (
+    window.scrollY ||
+    document.documentElement.scrollTop ||
+    document.body?.scrollTop ||
+    0
+  );
+}
+
+function getPageScrollHeight(): number {
+  if (typeof document === "undefined") {
+    return 0;
+  }
+
+  return Math.max(
+    document.body?.scrollHeight ?? 0,
+    document.documentElement.scrollHeight,
+  );
+}
+
+function getViewportHeight(): number {
+  if (typeof window === "undefined") {
+    return 0;
+  }
+
+  return window.innerHeight || document.documentElement.clientHeight || 0;
+}
+
+/** True when the viewport has reached (or nearly reached) the document bottom. */
+export function isAtPageBottom(
+  scrollY: number = getPageScrollTop(),
+  innerHeight: number = getViewportHeight(),
+  thresholdPx: number = 2,
+): boolean {
+  if (typeof document === "undefined") {
+    return false;
+  }
+
+  const scrollHeight = getPageScrollHeight();
+
+  if (scrollHeight <= innerHeight) {
+    return false;
+  }
+
+  return scrollY + innerHeight >= scrollHeight - thresholdPx;
+}
+
 export interface PickActiveGuideSectionOptions {
   overviewRect: DOMRect | null;
   overviewContentInsetTop: number;
@@ -54,12 +105,19 @@ export interface PickActiveGuideSectionOptions {
   activeStepMinVisibleRatio: number;
   stepContentInsetTop: number;
   innerHeight?: number;
+  /**
+   * When true, the final step wins if the reader has reached the document bottom.
+   * Pass `isAtPageBottom()` from scroll handlers; defaults to `false`.
+   */
+  atPageBottom?: boolean;
 }
 
 /**
  * Picks the active guide section while scrolling. The overview (`null`) competes
  * with steps using the same `activeStepMinVisibleRatio` rule — the earliest
- * section with enough visible area below its content inset wins.
+ * section with enough visible area below its content inset wins, except the
+ * final step wins when the reader reaches the document bottom or has scrolled it
+ * into the primary reading position (top at or above the step content inset).
  */
 export function pickActiveGuideSection({
   overviewRect,
@@ -69,6 +127,7 @@ export function pickActiveGuideSection({
   activeStepMinVisibleRatio,
   stepContentInsetTop,
   innerHeight = window.innerHeight,
+  atPageBottom = false,
 }: PickActiveGuideSectionOptions): number | null {
   const overviewRatio =
     overviewRect != null
@@ -88,16 +147,33 @@ export function pickActiveGuideSection({
     return [
       {
         step,
+        rect,
         visibleRatio: getStepVisibleRatio(rect, innerHeight, stepContentInsetTop),
       },
     ];
   });
+
+  const lastStep = stepNumbers.at(-1);
+  if (atPageBottom && lastStep != null) {
+    return lastStep;
+  }
 
   let activeStep: number | null = null;
   for (const entry of stepScores) {
     if (entry.visibleRatio >= activeStepMinVisibleRatio) {
       activeStep = entry.step;
       break;
+    }
+  }
+
+  if (lastStep != null) {
+    const lastEntry = stepScores.find((entry) => entry.step === lastStep);
+    if (
+      lastEntry != null &&
+      lastEntry.visibleRatio >= activeStepMinVisibleRatio &&
+      lastEntry.rect.top <= stepContentInsetTop
+    ) {
+      return lastStep;
     }
   }
 

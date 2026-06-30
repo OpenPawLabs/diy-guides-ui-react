@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   getOverviewRect,
   getStepVisibleRatio,
+  isAtPageBottom,
   pickActiveGuideSection,
   pickActiveGuideStep,
 } from "./pickActiveGuideStep";
@@ -106,6 +107,65 @@ describe("pickActiveGuideSection", () => {
       }),
     ).toBe(2);
   });
+
+  it("selects the final step when the reader has scrolled to the page bottom", () => {
+    const steps = new Map<number, DOMRect>([
+      [3, { top: 200, bottom: 500, height: 300 } as DOMRect],
+      [4, { top: 520, bottom: 720, height: 200 } as DOMRect],
+    ]);
+
+    expect(
+      pickActiveGuideSection({
+        overviewRect: null,
+        overviewContentInsetTop: 64,
+        stepNumbers: [3, 4],
+        getStepRect: (step) => steps.get(step) ?? null,
+        activeStepMinVisibleRatio: 0.2,
+        stepContentInsetTop: 144,
+        innerHeight: 900,
+        atPageBottom: true,
+      }),
+    ).toBe(4);
+  });
+
+  it("keeps natural step selection before the document bottom", () => {
+    const steps = new Map<number, DOMRect>([
+      [3, { top: 200, bottom: 500, height: 300 } as DOMRect],
+      [4, { top: 520, bottom: 720, height: 200 } as DOMRect],
+    ]);
+
+    expect(
+      pickActiveGuideSection({
+        overviewRect: null,
+        overviewContentInsetTop: 64,
+        stepNumbers: [3, 4],
+        getStepRect: (step) => steps.get(step) ?? null,
+        activeStepMinVisibleRatio: 0.2,
+        stepContentInsetTop: 144,
+        innerHeight: 900,
+        atPageBottom: false,
+      }),
+    ).toBe(3);
+  });
+
+  it("prefers the final step when it is in the primary reading position", () => {
+    const steps = new Map<number, DOMRect>([
+      [3, { top: 200, bottom: 500, height: 300 } as DOMRect],
+      [4, { top: 144, bottom: 344, height: 200 } as DOMRect],
+    ]);
+
+    expect(
+      pickActiveGuideSection({
+        overviewRect: null,
+        overviewContentInsetTop: 64,
+        stepNumbers: [3, 4],
+        getStepRect: (step) => steps.get(step) ?? null,
+        activeStepMinVisibleRatio: 0.2,
+        stepContentInsetTop: 144,
+        innerHeight: 900,
+      }),
+    ).toBe(4);
+  });
 });
 
 describe("pickActiveGuideStep", () => {
@@ -129,5 +189,25 @@ describe("pickActiveGuideStep", () => {
     expect(
       pickActiveGuideStep([1, 2], 0.2, (step) => elements.get(step) ?? null),
     ).toBe(1);
+  });
+});
+
+describe("isAtPageBottom", () => {
+  it("returns true when scroll position reaches the document bottom", () => {
+    Object.defineProperty(document.documentElement, "scrollHeight", {
+      configurable: true,
+      value: 2000,
+    });
+    Object.defineProperty(document.body, "scrollHeight", {
+      configurable: true,
+      value: 2000,
+    });
+
+    expect(isAtPageBottom(1100, 900, 2)).toBe(true);
+    expect(isAtPageBottom(500, 900, 2)).toBe(false);
+  });
+
+  it("returns false when the page is not scrollable", () => {
+    expect(isAtPageBottom(0, 900, 2)).toBe(false);
   });
 });

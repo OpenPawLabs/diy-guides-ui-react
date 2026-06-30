@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, type RefObject } from "react";
 import {
   getOverviewRect,
+  getStepVisibleRatio,
   isAtPageBottom,
   pickActiveGuideSection,
 } from "../utils/pickActiveGuideStep";
@@ -35,12 +36,29 @@ export interface UseGuideStepUrlSyncOptions {
 
 const SCROLL_SETTLE_MS = 900;
 
-function smoothScrollToElement(element: HTMLElement, scrollMarginTop: number) {
+function scrollToElement(
+  element: HTMLElement,
+  scrollMarginTop: number,
+  behavior: ScrollBehavior,
+) {
   const top = Math.max(
     0,
     element.getBoundingClientRect().top + window.scrollY - scrollMarginTop,
   );
-  window.scrollTo({ top, behavior: "smooth" });
+  window.scrollTo({ top, behavior });
+}
+
+function isStepVisibleEnough(
+  step: number,
+  scrollMarginTop: number,
+  activeStepMinVisibleRatio: number,
+): boolean {
+  const rect = getStepElement(step)?.getBoundingClientRect() ?? null;
+  return (
+    rect != null &&
+    getStepVisibleRatio(rect, window.innerHeight, scrollMarginTop) >=
+      activeStepMinVisibleRatio
+  );
 }
 
 function getStepElement(step: number): HTMLElement | null {
@@ -68,7 +86,12 @@ export function useGuideStepUrlSync({
   const isProgrammaticScrollRef = useRef(false);
   const didInitialScrollRef = useRef(false);
   const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const prevOverviewScrollMarginRef = useRef(overviewScrollMarginTop);
+  const prevScrollMarginsRef = useRef({
+    overview: overviewScrollMarginTop,
+    step: scrollMarginTop,
+  });
+  /** Step from the URL we are still scrolling into view — suppresses premature hash clears. */
+  const pendingUrlStepRef = useRef<number | null>(null);
   /** Flushes scroll-driven URL sync after programmatic scroll settles. */
   const syncActiveFromScrollRef = useRef<(() => void) | null>(null);
 
@@ -103,8 +126,33 @@ export function useGuideStepUrlSync({
     [onActiveStepChange, writeUrl],
   );
 
+  const finishProgrammaticScroll = useCallback(() => {
+    isProgrammaticScrollRef.current = false;
+    scrollTimerRef.current = null;
+
+    const pendingStep = pendingUrlStepRef.current;
+    if (
+      pendingStep != null &&
+      isStepVisibleEnough(
+        pendingStep,
+        scrollMarginTop,
+        activeStepMinVisibleRatio,
+      )
+    ) {
+      pendingUrlStepRef.current = null;
+    }
+
+    syncActiveFromScrollRef.current?.();
+  }, [activeStepMinVisibleRatio, scrollMarginTop]);
+
   const scrollToStep = useCallback(
-    (step: number | null) => {
+    (
+      step: number | null,
+      {
+        behavior = "smooth",
+        fromUrl = false,
+      }: { behavior?: ScrollBehavior; fromUrl?: boolean } = {},
+    ) => {
       if (typeof window === "undefined") {
         return;
       }
@@ -120,31 +168,49 @@ export function useGuideStepUrlSync({
 
       const margin = step != null ? scrollMarginTop : overviewScrollMarginTop;
 
+      pendingUrlStepRef.current = fromUrl ? step : null;
       isProgrammaticScrollRef.current = true;
       if (scrollTimerRef.current != null) {
         clearTimeout(scrollTimerRef.current);
       }
 
-      smoothScrollToElement(target, margin);
+      scrollToElement(target, margin, behavior);
       setActiveStep(step, { updateUrl: false });
 
-      scrollTimerRef.current = setTimeout(() => {
-        isProgrammaticScrollRef.current = false;
-        scrollTimerRef.current = null;
-        syncActiveFromScrollRef.current?.();
-      }, SCROLL_SETTLE_MS);
+      const settleMs = behavior === "auto" ? 0 : SCROLL_SETTLE_MS;
+      if (settleMs === 0) {
+        finishProgrammaticScroll();
+        return;
+      }
+
+      scrollTimerRef.current = setTimeout(finishProgrammaticScroll, settleMs);
     },
-    [guideTopRef, overviewScrollMarginTop, rootRef, scrollMarginTop, setActiveStep],
+    [
+      finishProgrammaticScroll,
+      guideTopRef,
+      overviewScrollMarginTop,
+      rootRef,
+      scrollMarginTop,
+      setActiveStep,
+    ],
   );
 
-  const scrollFromUrl = useCallback(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
+  const scrollFromUrl = useCallback(
+    ({ initial = false }: { initial?: boolean } = {}) => {
+      if (typeof window === "undefined") {
+        return;
+      }
 
-    const step = readGuideStepFromLocation(window.location, mode, stepUrlKey);
-    scrollToStep(step);
-  }, [mode, scrollToStep, stepUrlKey]);
+      const step = readGuideStepFromLocation(window.location, mode, stepUrlKey);
+      const snapToStep = initial && step != null;
+
+      scrollToStep(step, {
+        behavior: snapToStep ? "auto" : "smooth",
+        fromUrl: true,
+      });
+    },
+    [mode, scrollToStep, stepUrlKey],
+  );
 
   useEffect(() => {
     if (!enabled || typeof window === "undefined" || didInitialScrollRef.current) {
@@ -171,7 +237,7 @@ export function useGuideStepUrlSync({
     }
 
     didInitialScrollRef.current = true;
-    scrollFromUrl();
+    scrollFromUrl({ initial: true });
   }, [
     enabled,
     mode,
@@ -186,23 +252,42 @@ export function useGuideStepUrlSync({
       return;
     }
 
-    if (prevOverviewScrollMarginRef.current === overviewScrollMarginTop) {
+    const prevMargins = prevScrollMarginsRef.current;
+    const marginsChanged =
+      prevMargins.overview !== overviewScrollMarginTop ||
+      prevMargins.step !== scrollMarginTop;
+
+    if (!marginsChanged) {
       return;
     }
 
-    prevOverviewScrollMarginRef.current = overviewScrollMarginTop;
+    prevScrollMarginsRef.current = {
+      overview: overviewScrollMarginTop,
+      step: scrollMarginTop,
+    };
+
+    if (isProgrammaticScrollRef.current) {
+      return;
+    }
 
     const requestedStep = readGuideStepFromLocation(
       window.location,
       mode,
       stepUrlKey,
     );
-    if (requestedStep != null || isProgrammaticScrollRef.current) {
-      return;
-    }
 
-    scrollToStep(null);
-  }, [enabled, mode, overviewScrollMarginTop, scrollToStep, stepUrlKey]);
+    scrollToStep(requestedStep, {
+      behavior: requestedStep != null ? "auto" : "smooth",
+      fromUrl: requestedStep != null,
+    });
+  }, [
+    enabled,
+    mode,
+    overviewScrollMarginTop,
+    scrollMarginTop,
+    scrollToStep,
+    stepUrlKey,
+  ]);
 
   useEffect(() => {
     if (!enabled || typeof window === "undefined") {
@@ -235,6 +320,24 @@ export function useGuideStepUrlSync({
 
     const updateActiveFromScroll = () => {
       if (isProgrammaticScrollRef.current) {
+        return;
+      }
+
+      const pendingStep = pendingUrlStepRef.current;
+      if (pendingStep != null) {
+        if (
+          isStepVisibleEnough(
+            pendingStep,
+            scrollMarginTop,
+            activeStepMinVisibleRatio,
+          )
+        ) {
+          pendingUrlStepRef.current = null;
+          setActiveStep(pendingStep, { updateUrl: false });
+          return;
+        }
+
+        setActiveStep(pendingStep, { updateUrl: false });
         return;
       }
 

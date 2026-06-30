@@ -250,7 +250,7 @@ describe("useGuideStepUrlSync", () => {
     });
   });
 
-  it("smooth-scrolls to the requested step from the hash", async () => {
+  it("instant-scrolls to the requested step on initial load", async () => {
     window.location.hash = "#step-2";
     mockRects({
       guideTop: { top: 0, bottom: 400, height: 400 },
@@ -260,6 +260,29 @@ describe("useGuideStepUrlSync", () => {
     });
 
     render(<SyncHarness scrollMarginTop={64} stepNumbers={[1, 2]} />);
+
+    await waitFor(() => {
+      expect(scrollTo).toHaveBeenCalledWith({ top: 236, behavior: "auto" });
+    });
+  });
+
+  it("smooth-scrolls to a step when the hash changes after initial load", async () => {
+    mockRects({
+      guideTop: { top: 0, bottom: 400, height: 400 },
+      steps: {
+        2: { top: 300, bottom: 600, height: 300 },
+      },
+    });
+
+    render(<SyncHarness scrollMarginTop={64} stepNumbers={[1, 2]} />);
+
+    await waitFor(() => {
+      expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: "smooth" });
+    });
+
+    scrollTo.mockClear();
+    window.location.hash = "#step-2";
+    window.dispatchEvent(new HashChangeEvent("hashchange"));
 
     await waitFor(() => {
       expect(scrollTo).toHaveBeenCalledWith({ top: 236, behavior: "smooth" });
@@ -273,6 +296,37 @@ describe("useGuideStepUrlSync", () => {
 
     await waitFor(() => {
       expect(scrollTo).not.toHaveBeenCalled();
+    });
+  });
+
+  it("re-scrolls the requested step when scroll margins become available", async () => {
+    vi.spyOn(window.history, "replaceState").mockImplementation(() => {});
+    window.location.hash = "#step-2";
+    window.location.href = "https://example.com/guide#step-2";
+    mockRects({
+      guideTop: { top: 0, bottom: 400, height: 400 },
+      steps: {
+        2: { top: 300, bottom: 600, height: 300 },
+      },
+    });
+
+    function MarginHarness({ scrollMarginTop }: { scrollMarginTop: number }) {
+      return (
+        <SyncHarness scrollMarginTop={scrollMarginTop} stepNumbers={[1, 2]} />
+      );
+    }
+
+    const { rerender } = render(<MarginHarness scrollMarginTop={0} />);
+
+    await waitFor(() => {
+      expect(scrollTo).toHaveBeenCalledWith({ top: 300, behavior: "auto" });
+    });
+
+    scrollTo.mockClear();
+    rerender(<MarginHarness scrollMarginTop={64} />);
+
+    await waitFor(() => {
+      expect(scrollTo).toHaveBeenCalledWith({ top: 236, behavior: "auto" });
     });
   });
 
@@ -330,8 +384,7 @@ describe("useGuideStepUrlSync", () => {
     vi.useRealTimers();
   });
 
-  it("clears the step hash when the reader scrolls back to the overview", async () => {
-    vi.useFakeTimers();
+  it("keeps the step hash while scrolling to a deep-linked step", async () => {
     const replaceState = vi
       .spyOn(window.history, "replaceState")
       .mockImplementation(() => {});
@@ -356,7 +409,63 @@ describe("useGuideStepUrlSync", () => {
       />,
     );
 
+    await waitFor(() => {
+      expect(scrollTo).toHaveBeenCalledWith({ top: 736, behavior: "auto" });
+    });
+
+    intersectionCallback?.();
+
+    expect(replaceState).not.toHaveBeenCalledWith(
+      window.history.state,
+      "",
+      "https://example.com/guide",
+    );
+  });
+
+  it("clears the step hash when the reader scrolls back to the overview", async () => {
+    vi.useFakeTimers();
+    const replaceState = vi
+      .spyOn(window.history, "replaceState")
+      .mockImplementation(() => {});
+
+    mockRects({
+      guideTop: { top: -500, bottom: -100, height: 400 },
+      guideContent: { top: -100, bottom: -100, height: 0 },
+      steps: {
+        1: { top: 144, bottom: 344, height: 200 },
+        2: { top: 1200, bottom: 1400, height: 200 },
+      },
+    });
+
+    render(
+      <SyncHarness
+        overviewScrollMarginTop={64}
+        scrollMarginTop={144}
+        stepNumbers={[1, 2]}
+      />,
+    );
+
     await vi.advanceTimersByTimeAsync(901);
+    intersectionCallback?.();
+
+    expect(replaceState).toHaveBeenCalledWith(
+      window.history.state,
+      "",
+      "https://example.com/guide#step-1",
+    );
+
+    window.location.hash = "#step-1";
+    window.location.href = "https://example.com/guide#step-1";
+    replaceState.mockClear();
+    mockRects({
+      guideTop: { top: 64, bottom: 500, height: 436 },
+      guideContent: { top: 500, bottom: 500, height: 0 },
+      steps: {
+        1: { top: 880, bottom: 1080, height: 200 },
+        2: { top: 1200, bottom: 1400, height: 200 },
+      },
+    });
+
     intersectionCallback?.();
 
     expect(replaceState).toHaveBeenCalledWith(

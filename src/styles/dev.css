@@ -1,0 +1,8 @@
+/* Storybook/dev entry: generate Tailwind utilities for local examples only. */
+@import "tailwindcss" source(none);
+@source "../components";
+@source "../stories";
+@source "../../.storybook";
+
+@import "@heroui/styles";
+@import "./index.css";

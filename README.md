@@ -46,7 +46,7 @@ src/
   components/     # One folder per component (tsx, stories, tests, index)
   hooks/          # Shared hooks (e.g. useControlledState)
   types/          # Shared design tokens (colors, callout types) and types
-  styles/         # Tailwind + HeroUI CSS entry
+  styles/         # Public component CSS plus Storybook/dev Tailwind entry
   index.ts        # Public API exports
 .storybook/       # Storybook configuration
 ```
@@ -63,12 +63,16 @@ Import styles in your app CSS:
 
 ```css
 @import "tailwindcss";
+@source "../node_modules/@openpawlabs/diy-guides-ui/dist";
 @import "@heroui/styles";
 @import "@openpawlabs/diy-guides-ui/styles";
 ```
 
+The package styles export contains only library design tokens and component CSS.
+Your app owns Tailwind generation, so include the `@source` path from your CSS
+file to the installed package `dist/` directory.
+
 ```tsx
-import "@openpawlabs/diy-guides-ui/styles";
 import {
   GuideLayout,
   GuideStepList,

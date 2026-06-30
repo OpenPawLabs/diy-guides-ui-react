@@ -33,7 +33,8 @@ pnpm lint             # ESLint
 src/
   index.ts                 # Public API — re-export all published components
   styles/
-    index.css              # Tailwind + HeroUI imports (required by consumers)
+    index.css              # Public design tokens + component CSS
+    dev.css                # Storybook/dev Tailwind + HeroUI entry
   components/
     <ComponentName>/
       <ComponentName>.tsx
@@ -84,8 +85,8 @@ HeroUI v3 differs from v2. Follow these strictly:
 |------|--------|
 | **No global Provider** | Do not add `HeroUIProvider`. Import components directly. |
 | **No NextUI imports** | Never use `@nextui-org/*` — that is the old library. |
-| **Tailwind v4 only** | Use `@import "tailwindcss"` in CSS. No `tailwind.config.js`. |
-| **Import order** | Tailwind first, then `@import "@heroui/styles"` in `src/styles/index.css`. |
+| **Tailwind v4 only** | Use CSS-first config. No `tailwind.config.js`. |
+| **Import order** | Consumer apps import Tailwind, `@source` the UI package, HeroUI styles, then `@openpawlabs/diy-guides-ui/styles`. Storybook imports `src/styles/dev.css`. |
 | **Compound components** | Use dot notation: `Card.Header`, `Modal.Dialog`. |
 | **Events** | Prefer `onPress` over `onClick` on interactive HeroUI components. |
 | **Client components** | Add `"use client"` only when using state, effects, or event handlers in files that will be consumed by RSC apps. |
@@ -133,9 +134,14 @@ They must import styles in their app entry:
 
 ```css
 @import "tailwindcss";
+@source "../node_modules/@openpawlabs/diy-guides-ui/dist";
 @import "@heroui/styles";
 @import "@openpawlabs/diy-guides-ui/styles";
 ```
+
+`@openpawlabs/diy-guides-ui/styles` contains only library tokens and component
+CSS. The consuming app owns Tailwind utility generation and must point
+`@source` at the installed package `dist/` path relative to its stylesheet.
 
 React and React DOM are **peer dependencies** — the host app provides them.
 

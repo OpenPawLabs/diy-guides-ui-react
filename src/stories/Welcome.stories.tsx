@@ -80,11 +80,11 @@ type Story = StoryObj<typeof meta>;
 const installExample = `pnpm add @openpawlabs/diy-guides-ui @heroui/react @heroui/styles tailwindcss`;
 
 const stylesExample = `@import "tailwindcss";
+@source "../node_modules/@openpawlabs/diy-guides-ui/dist";
 @import "@heroui/styles";
 @import "@openpawlabs/diy-guides-ui/styles";`;
 
-const importsExample = `import "@openpawlabs/diy-guides-ui/styles";
-import {
+const importsExample = `import {
   GuideLayout,
   GuideStepList,
   GuideStep,
@@ -537,15 +537,17 @@ export const Installation: Story = {
 
       <Section title="2. Load styles once, in the right order">
         <p>
-          In your app&apos;s global stylesheet, import Tailwind first, then
-          HeroUI, then the library. Order matters — HeroUI&apos;s tokens build on
-          Tailwind, and the library builds on both.
+          In your app&apos;s global stylesheet, import Tailwind first, point
+          Tailwind at the installed library so it can generate the component
+          utilities, then import HeroUI and the library&apos;s component styles.
         </p>
         <div className="mt-4">
           <CodeBlock>{stylesExample}</CodeBlock>
         </div>
         <p className="mt-3">
-          There is no provider to add. Import components directly and they work.
+          Adjust the <InlineCode>@source</InlineCode> path so it is relative to
+          your stylesheet. There is no provider to add; import components
+          directly and they work.
         </p>
       </Section>
 

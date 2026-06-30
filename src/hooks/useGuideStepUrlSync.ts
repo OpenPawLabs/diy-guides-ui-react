@@ -66,6 +66,8 @@ export function useGuideStepUrlSync({
   const isProgrammaticScrollRef = useRef(false);
   const didInitialScrollRef = useRef(false);
   const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Flushes scroll-driven URL sync after programmatic scroll settles. */
+  const syncActiveFromScrollRef = useRef<(() => void) | null>(null);
 
   const writeUrl = useCallback(
     (step: number | null) => {
@@ -124,6 +126,7 @@ export function useGuideStepUrlSync({
       scrollTimerRef.current = setTimeout(() => {
         isProgrammaticScrollRef.current = false;
         scrollTimerRef.current = null;
+        syncActiveFromScrollRef.current?.();
       }, SCROLL_SETTLE_MS);
     },
     [guideTopRef, rootRef, setActiveStep],
@@ -190,6 +193,9 @@ export function useGuideStepUrlSync({
       window.removeEventListener("popstate", handleUrlChange);
       if (scrollTimerRef.current != null) {
         clearTimeout(scrollTimerRef.current);
+        scrollTimerRef.current = null;
+        isProgrammaticScrollRef.current = false;
+        syncActiveFromScrollRef.current?.();
       }
     };
   }, [enabled, scrollFromUrl]);
@@ -243,9 +249,11 @@ export function useGuideStepUrlSync({
       }
     }
 
+    syncActiveFromScrollRef.current = updateActiveFromScroll;
     updateActiveFromScroll();
 
     return () => {
+      syncActiveFromScrollRef.current = null;
       observer.disconnect();
     };
   }, [

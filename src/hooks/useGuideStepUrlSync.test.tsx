@@ -144,6 +144,39 @@ describe("useGuideStepUrlSync", () => {
     });
   });
 
+  it("syncs the URL from scroll after initial programmatic scroll settles", async () => {
+    vi.useFakeTimers();
+    const replaceState = vi
+      .spyOn(window.history, "replaceState")
+      .mockImplementation(() => {});
+
+    render(<SyncHarness stepNumbers={[1, 2]} />);
+
+    const guideTop = document.querySelector("[data-testid='guide-top']") as HTMLElement;
+    const stepOne = document.getElementById("step-1") as HTMLElement;
+
+    vi.spyOn(guideTop, "getBoundingClientRect").mockReturnValue({
+      top: -500,
+      bottom: -100,
+      height: 400,
+    } as DOMRect);
+    vi.spyOn(stepOne, "getBoundingClientRect").mockReturnValue({
+      top: 100,
+      bottom: 400,
+      height: 300,
+    } as DOMRect);
+
+    await vi.advanceTimersByTimeAsync(901);
+
+    expect(replaceState).toHaveBeenCalledWith(
+      window.history.state,
+      "",
+      "https://example.com/guide#step-1",
+    );
+
+    vi.useRealTimers();
+  });
+
   it("clears the step hash when the reader scrolls back to the overview", async () => {
     vi.useFakeTimers();
     const replaceState = vi

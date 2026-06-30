@@ -1,10 +1,13 @@
 "use client";
 
-import { useRef, type ReactNode } from "react";
+import { useMemo, useRef, type CSSProperties, type ReactNode } from "react";
 import { Chip, cn } from "@heroui/react";
 import {
+  computeGuideOverviewScrollMarginTop,
+  GuideContentRefContext,
   GuideScrollMarginContext,
   GuideTopRefContext,
+  useGuideContentRef,
 } from "../../context/guideScrollMargin";
 import {
   DifficultyBadge,
@@ -15,11 +18,11 @@ export interface GuideLayoutProps {
   /** `GuideLayout.Header`, `GuideLayout.Intro`, `GuideLayout.Sidebar`, and `GuideLayout.Content`. */
   children: ReactNode;
   /**
-   * Extra top scroll margin (px) for fixed site chrome above the guide — passed
-   * to nested `GuideStepList`s so deep links land below the header.
+   * Parent/site header offset (px) for fixed chrome above the guide — applied to
+   * the guide overview anchor, the sticky progress bar, and step deep links.
    * @default 0
    */
-  stepScrollMarginTop?: number;
+  scrollMarginTop?: number;
   className?: string;
 }
 
@@ -130,8 +133,13 @@ function GuideLayoutContent({
   children: ReactNode;
   className?: string;
 }) {
+  const contentRef = useGuideContentRef();
+
   return (
-    <main className={cn("min-w-0 w-full md:[grid-area:main]", className)}>
+    <main
+      ref={contentRef}
+      className={cn("min-w-0 w-full md:[grid-area:main]", className)}
+    >
       {children}
     </main>
   );
@@ -146,24 +154,39 @@ function GuideLayoutContent({
 export const GuideLayout = Object.assign(
   function GuideLayoutRoot({
     children,
-    stepScrollMarginTop = 0,
+    scrollMarginTop = 0,
     className,
   }: GuideLayoutProps) {
     const guideTopRef = useRef<HTMLDivElement>(null);
+    const guideContentRef = useRef<HTMLElement>(null);
+    const overviewScrollMarginTop = useMemo(
+      () =>
+        computeGuideOverviewScrollMarginTop({
+          parentScrollMarginTop: scrollMarginTop,
+        }),
+      [scrollMarginTop],
+    );
+    const rootStyle = useMemo<CSSProperties>(
+      () => ({ scrollMarginTop: overviewScrollMarginTop }),
+      [overviewScrollMarginTop],
+    );
 
     return (
       <GuideTopRefContext.Provider value={guideTopRef}>
-        <GuideScrollMarginContext.Provider value={stepScrollMarginTop}>
-          <div
-            ref={guideTopRef}
-            className={cn(
-              "mx-auto grid w-full max-w-6xl grid-cols-1 gap-x-8 gap-y-8 md:grid-cols-[minmax(0,1fr)_20rem] md:[grid-template-areas:'header_header'_'intro_sidebar'_'main_main']",
-              className,
-            )}
-          >
-            {children}
-          </div>
-        </GuideScrollMarginContext.Provider>
+        <GuideContentRefContext.Provider value={guideContentRef}>
+          <GuideScrollMarginContext.Provider value={scrollMarginTop}>
+            <div
+              ref={guideTopRef}
+              style={rootStyle}
+              className={cn(
+                "mx-auto grid w-full max-w-6xl grid-cols-1 gap-x-8 gap-y-8 md:grid-cols-[minmax(0,1fr)_20rem] md:[grid-template-areas:'header_header'_'intro_sidebar'_'main_main']",
+                className,
+              )}
+            >
+              {children}
+            </div>
+          </GuideScrollMarginContext.Provider>
+        </GuideContentRefContext.Provider>
       </GuideTopRefContext.Provider>
     );
   },

@@ -19,7 +19,7 @@ if (typeof globalThis.IntersectionObserver === "undefined") {
   } as unknown as typeof IntersectionObserver;
 }
 
-if (typeof window !== "undefined" && !window.scrollTo) {
+if (typeof window !== "undefined") {
   window.scrollTo = () => {};
 }
 

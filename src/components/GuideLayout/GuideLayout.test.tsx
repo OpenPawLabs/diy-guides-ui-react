@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import { computeGuideOverviewScrollMarginTop } from "../../context/guideScrollMargin";
 import { GuideLayout } from "./GuideLayout";
 
 describe("GuideLayout", () => {
@@ -66,5 +67,18 @@ describe("GuideLayout", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "No Hero Guide" }),
     ).toBeInTheDocument();
+  });
+
+  it("applies overview scroll margin for fixed site chrome", () => {
+    const { container } = render(
+      <GuideLayout scrollMarginTop={64}>
+        <GuideLayout.Header title="Offset Guide" />
+      </GuideLayout>,
+    );
+
+    const root = container.firstElementChild as HTMLElement;
+    expect(root).toHaveStyle({
+      scrollMarginTop: `${computeGuideOverviewScrollMarginTop({ parentScrollMarginTop: 64 })}px`,
+    });
   });
 });

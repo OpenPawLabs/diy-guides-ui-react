@@ -5,6 +5,7 @@ import {
   cloneElement,
   isValidElement,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -13,7 +14,9 @@ import {
 } from "react";
 import { Card, ProgressBar, Separator, cn } from "@heroui/react";
 import {
+  computeGuideOverviewScrollMarginTop,
   computeGuideStepScrollMarginTop,
+  useGuideContentRef,
   useGuideScrollMargin,
   useGuideTopRef,
 } from "../../context/guideScrollMargin";
@@ -48,8 +51,7 @@ export interface GuideStepListProps {
   /** Fires when the visible step changes (from scroll or URL). */
   onActiveStepChange?: (step: number | null) => void;
   /**
-   * Extra top scroll margin (px) beyond `GuideLayout.stepScrollMarginTop` and
-   * the measured sticky progress bar — e.g. additional fixed chrome in embedders.
+   * Extra parent/site header offset (px) beyond `GuideLayout.scrollMarginTop`.
    * @default 0
    */
   scrollMarginTop?: number;
@@ -78,7 +80,7 @@ export function GuideStepList({
   stepUrlMode = "hash",
   stepUrlKey = "step",
   onActiveStepChange,
-  scrollMarginTop: additionalScrollMarginTop = 0,
+  scrollMarginTop: additionalParentScrollMarginTop = 0,
   activeStepMinVisibleRatio = 0.2,
   className,
 }: GuideStepListProps) {
@@ -90,25 +92,46 @@ export function GuideStepList({
     layoutSettleKey: showProgress,
   });
 
-  const siteScrollMarginTop = useGuideScrollMargin();
+  const parentScrollMarginTop = useGuideScrollMargin();
   const guideTopRef = useGuideTopRef();
+  const guideContentRef = useGuideContentRef();
+
+  const overviewScrollMarginTop = useMemo(
+    () =>
+      computeGuideOverviewScrollMarginTop({
+        parentScrollMarginTop,
+        additionalParentScrollMarginTop,
+      }),
+    [additionalParentScrollMarginTop, parentScrollMarginTop],
+  );
 
   const stepScrollMarginTop = useMemo(
     () =>
       computeGuideStepScrollMarginTop({
-        siteScrollMarginTop,
+        parentScrollMarginTop,
+        additionalParentScrollMarginTop,
         progressBarHeight: progressSize?.height ?? 0,
         includeProgressBar: showProgress && total > 0,
-        additionalScrollMarginTop,
       }),
     [
-      additionalScrollMarginTop,
+      additionalParentScrollMarginTop,
+      parentScrollMarginTop,
       progressSize?.height,
       showProgress,
-      siteScrollMarginTop,
       total,
     ],
   );
+
+  const progressBarStickyTop = overviewScrollMarginTop;
+
+  useLayoutEffect(() => {
+    const guideTop = guideTopRef?.current;
+    if (guideTop == null) {
+      return;
+    }
+
+    guideTop.style.scrollMarginTop = `${overviewScrollMarginTop}px`;
+  }, [guideTopRef, overviewScrollMarginTop]);
 
   const stepNumbers = steps.map(
     (step, index) => step.props.number ?? index + 1,
@@ -136,10 +159,12 @@ export function GuideStepList({
     enabled: syncStepUrl,
     rootRef,
     guideTopRef,
+    guideContentRef,
     stepNumbers,
     mode: stepUrlMode,
     stepUrlKey,
     scrollMarginTop: stepScrollMarginTop,
+    overviewScrollMarginTop,
     activeStepMinVisibleRatio,
     onActiveStepChange,
   });
@@ -147,7 +172,11 @@ export function GuideStepList({
   return (
     <div ref={rootRef} className={cn("flex flex-col gap-8", className)}>
       {showProgress && total > 0 && (
-        <div ref={progressRef} className="sticky top-2 mx-2 z-10">
+        <div
+          ref={progressRef}
+          className="sticky z-10 mx-2"
+          style={{ top: progressBarStickyTop }}
+        >
           <Card className="w-full px-6 py-4">
             <ProgressBar
               value={completedCount}

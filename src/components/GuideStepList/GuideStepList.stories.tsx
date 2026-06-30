@@ -21,7 +21,7 @@ the instructions. Drop your steps in and it:
   changes. Use it to drive your app's own progress UI, persistence, or analytics.
 - \`syncStepUrl\` — keep the page URL aligned with the visible step (default \`true\`).
 - \`stepUrlMode\` — \`"hash"\` (\`#step-2\`) or \`"search"\` (\`?step=2\`); default \`"hash"\`.
-- \`scrollMarginTop\` — extra top inset (px) beyond \`GuideLayout.stepScrollMarginTop\` and the measured sticky progress bar.
+- \`scrollMarginTop\` — extra parent/site header offset (px) beyond \`GuideLayout.scrollMarginTop\`.
 - \`activeStepMinVisibleRatio\` — fraction of step height that must remain visible to stay active (default \`0.2\`).
 - \`onActiveStepChange\` — fires with the visible step number, or \`null\` at the guide top.`;
 

@@ -82,7 +82,11 @@ export {
 } from "./utils/guideStepUrl";
 
 export {
+  computeGuideLibraryScrollMarginTop,
+  computeGuideOverviewScrollMarginTop,
   computeGuideStepScrollMarginTop,
+  computeParentScrollMarginTop,
+  useGuideContentRef,
   useGuideScrollMargin,
   GuideScrollMarginContext,
 } from "./context/guideScrollMargin";

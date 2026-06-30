@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, type RefObject } from "react";
 import {
-  pickActiveGuideStep,
-  shouldClearGuideStepFromUrl,
+  getOverviewRect,
+  pickActiveGuideSection,
 } from "../utils/pickActiveGuideStep";
 import {
   buildGuideStepUrl,
@@ -9,20 +9,24 @@ import {
   readGuideStepFromLocation,
   type GuideStepUrlMode,
 } from "../utils/guideStepUrl";
+
 export interface UseGuideStepUrlSyncOptions {
   enabled: boolean;
   rootRef: RefObject<HTMLElement | null>;
   /** Overview anchor from `GuideLayout` — used when the URL has no step. */
   guideTopRef?: RefObject<HTMLElement | null> | null;
+  /** Top of `GuideLayout.Content` — bounds the overview region for URL sync. */
+  guideContentRef?: RefObject<HTMLElement | null> | null;
   stepNumbers: number[];
   mode?: GuideStepUrlMode;
   stepUrlKey?: string;
-  /** Top scroll margin (px) — should match each step's `scrollMarginTop`. @default 0 */
+  /** Step scroll margin (px) — parent offset plus library progress-bar clearance. */
   scrollMarginTop?: number;
+  /** Overview scroll margin (px) — parent offset only. */
+  overviewScrollMarginTop?: number;
   /**
-   * Fraction of a step's height that must remain visible in the viewport for it
-   * to stay active. When less than this remains on screen, the next step takes
-   * over. @default 0.2
+   * Fraction of a section's height that must remain visible below fixed chrome for
+   * it to stay active. Applies to the overview and steps alike. @default 0.2
    */
   activeStepMinVisibleRatio?: number;
   onActiveStepChange?: (step: number | null) => void;
@@ -30,23 +34,18 @@ export interface UseGuideStepUrlSyncOptions {
 
 const SCROLL_SETTLE_MS = 900;
 
-function smoothScrollToElement(element: HTMLElement) {
-  element.scrollIntoView({ behavior: "smooth", block: "start" });
+function smoothScrollToElement(element: HTMLElement, scrollMarginTop: number) {
+  const top = Math.max(
+    0,
+    element.getBoundingClientRect().top + window.scrollY - scrollMarginTop,
+  );
+  window.scrollTo({ top, behavior: "smooth" });
 }
 
 function getStepElement(step: number): HTMLElement | null {
   return document.getElementById(guideStepUrlId(step));
 }
 
-function pickActiveStep(
-  stepNumbers: number[],
-  activeStepMinVisibleRatio: number,
-): number | null {
-  return pickActiveGuideStep(stepNumbers, activeStepMinVisibleRatio, (step) => {
-    const element = getStepElement(step);
-    return element?.getBoundingClientRect() ?? null;
-  });
-}
 /**
  * Keeps the page URL in sync with the guide step in view and smooth-scrolls when
  * the URL names a step (including on load and `hashchange`).
@@ -55,10 +54,12 @@ export function useGuideStepUrlSync({
   enabled,
   rootRef,
   guideTopRef = null,
+  guideContentRef = null,
   stepNumbers,
   mode = "hash",
   stepUrlKey = "step",
   scrollMarginTop = 0,
+  overviewScrollMarginTop = 0,
   activeStepMinVisibleRatio = 0.2,
   onActiveStepChange,
 }: UseGuideStepUrlSyncOptions) {
@@ -66,6 +67,7 @@ export function useGuideStepUrlSync({
   const isProgrammaticScrollRef = useRef(false);
   const didInitialScrollRef = useRef(false);
   const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const prevOverviewScrollMarginRef = useRef(overviewScrollMarginTop);
   /** Flushes scroll-driven URL sync after programmatic scroll settles. */
   const syncActiveFromScrollRef = useRef<(() => void) | null>(null);
 
@@ -115,12 +117,14 @@ export function useGuideStepUrlSync({
         return;
       }
 
+      const margin = step != null ? scrollMarginTop : overviewScrollMarginTop;
+
       isProgrammaticScrollRef.current = true;
       if (scrollTimerRef.current != null) {
         clearTimeout(scrollTimerRef.current);
       }
 
-      smoothScrollToElement(target);
+      smoothScrollToElement(target, margin);
       setActiveStep(step, { updateUrl: false });
 
       scrollTimerRef.current = setTimeout(() => {
@@ -129,7 +133,7 @@ export function useGuideStepUrlSync({
         syncActiveFromScrollRef.current?.();
       }, SCROLL_SETTLE_MS);
     },
-    [guideTopRef, rootRef, setActiveStep],
+    [guideTopRef, overviewScrollMarginTop, rootRef, scrollMarginTop, setActiveStep],
   );
 
   const scrollFromUrl = useCallback(() => {
@@ -181,6 +185,29 @@ export function useGuideStepUrlSync({
       return;
     }
 
+    if (prevOverviewScrollMarginRef.current === overviewScrollMarginTop) {
+      return;
+    }
+
+    prevOverviewScrollMarginRef.current = overviewScrollMarginTop;
+
+    const requestedStep = readGuideStepFromLocation(
+      window.location,
+      mode,
+      stepUrlKey,
+    );
+    if (requestedStep != null || isProgrammaticScrollRef.current) {
+      return;
+    }
+
+    scrollToStep(null);
+  }, [enabled, mode, overviewScrollMarginTop, scrollToStep, stepUrlKey]);
+
+  useEffect(() => {
+    if (!enabled || typeof window === "undefined") {
+      return;
+    }
+
     const handleUrlChange = () => {
       scrollFromUrl();
     };
@@ -210,29 +237,19 @@ export function useGuideStepUrlSync({
         return;
       }
 
-      const firstStep = stepNumbers[0];
       const guideTopRect = guideTopRef?.current?.getBoundingClientRect() ?? null;
-      const firstStepRect =
-        firstStep != null
-          ? getStepElement(firstStep)?.getBoundingClientRect() ?? null
-          : null;
+      const contentTopRect =
+        guideContentRef?.current?.getBoundingClientRect() ?? null;
+      const overviewRect = getOverviewRect(guideTopRect, contentTopRect);
 
-      if (
-        shouldClearGuideStepFromUrl({
-          guideTopRect,
-          firstStepRect,
-          scrollMarginTop,
-          activeStepMinVisibleRatio,
-        })
-      ) {
-        setActiveStep(null, { updateUrl: true });
-        return;
-      }
-
-      const active = pickActiveStep(
+      const active = pickActiveGuideSection({
+        overviewRect,
+        overviewContentInsetTop: overviewScrollMarginTop,
         stepNumbers,
+        getStepRect: (step) => getStepElement(step)?.getBoundingClientRect() ?? null,
         activeStepMinVisibleRatio,
-      );
+        stepContentInsetTop: scrollMarginTop,
+      });
       setActiveStep(active, { updateUrl: true });
     };
 
@@ -242,8 +259,13 @@ export function useGuideStepUrlSync({
       threshold: [0, 0.05, 0.1, 0.2, 0.25, 0.5, 0.75, 0.8, 0.9, 1],
     });
 
-    for (const step of stepNumbers) {
-      const element = getStepElement(step);
+    const observeTargets = [
+      guideTopRef?.current,
+      guideContentRef?.current,
+      ...stepNumbers.map((step) => getStepElement(step)),
+    ];
+
+    for (const element of observeTargets) {
       if (element != null) {
         observer.observe(element);
       }
@@ -259,7 +281,9 @@ export function useGuideStepUrlSync({
   }, [
     activeStepMinVisibleRatio,
     enabled,
+    guideContentRef,
     guideTopRef,
+    overviewScrollMarginTop,
     scrollMarginTop,
     setActiveStep,
     stepNumbers.join(","),

@@ -1,10 +1,112 @@
 import { describe, expect, it } from "vitest";
 import {
+  getOverviewRect,
   getStepVisibleRatio,
-  isGuideOverviewVisible,
+  pickActiveGuideSection,
   pickActiveGuideStep,
-  shouldClearGuideStepFromUrl,
 } from "./pickActiveGuideStep";
+
+describe("getStepVisibleRatio", () => {
+  it("ignores the area hidden behind fixed chrome at the top", () => {
+    expect(getStepVisibleRatio({ top: -50, bottom: 350, height: 400 } as DOMRect, 900, 144)).toBeCloseTo(
+      206 / 400,
+      2,
+    );
+  });
+
+  it("returns zero when the section is entirely above the content inset", () => {
+    expect(getStepVisibleRatio({ top: -300, bottom: 50, height: 350 } as DOMRect, 900, 144)).toBe(0);
+  });
+});
+
+describe("getOverviewRect", () => {
+  it("spans from the guide top through the content column", () => {
+    const rect = getOverviewRect(
+      { top: 64, bottom: 1200, height: 1136, left: 0, right: 800, width: 800, x: 0, y: 64 } as DOMRect,
+      { top: 520, bottom: 1200, height: 680, left: 0, right: 800, width: 800, x: 0, y: 520 } as DOMRect,
+    );
+
+    expect(rect).toMatchObject({ top: 64, bottom: 520, height: 456 });
+  });
+});
+
+describe("pickActiveGuideSection", () => {
+  it("selects a step when it is more visible than the overview", () => {
+    const overviewRect = { top: -350, bottom: 120, height: 470 } as DOMRect;
+    const steps = new Map<number, DOMRect>([
+      [1, { top: 160, bottom: 520, height: 360 } as DOMRect],
+    ]);
+
+    expect(
+      pickActiveGuideSection({
+        overviewRect,
+        overviewContentInsetTop: 64,
+        stepNumbers: [1],
+        getStepRect: (step) => steps.get(step) ?? null,
+        activeStepMinVisibleRatio: 0.2,
+        stepContentInsetTop: 144,
+        innerHeight: 900,
+      }),
+    ).toBe(1);
+  });
+
+  it("selects a step once the overview falls below the visible ratio", () => {
+    const overviewRect = { top: -300, bottom: 100, height: 400 } as DOMRect;
+    const steps = new Map<number, DOMRect>([
+      [1, { top: 160, bottom: 520, height: 360 } as DOMRect],
+    ]);
+
+    expect(
+      pickActiveGuideSection({
+        overviewRect,
+        overviewContentInsetTop: 64,
+        stepNumbers: [1],
+        getStepRect: (step) => steps.get(step) ?? null,
+        activeStepMinVisibleRatio: 0.2,
+        stepContentInsetTop: 144,
+        innerHeight: 900,
+      }),
+    ).toBe(1);
+  });
+
+  it("clears the step when the overview is fully visible again", () => {
+    const overviewRect = { top: 64, bottom: 700, height: 636 } as DOMRect;
+    const steps = new Map<number, DOMRect>([
+      [1, { top: 820, bottom: 1020, height: 200 } as DOMRect],
+    ]);
+
+    expect(
+      pickActiveGuideSection({
+        overviewRect,
+        overviewContentInsetTop: 64,
+        stepNumbers: [1],
+        getStepRect: (step) => steps.get(step) ?? null,
+        activeStepMinVisibleRatio: 0.2,
+        stepContentInsetTop: 144,
+        innerHeight: 900,
+      }),
+    ).toBeNull();
+  });
+
+  it("does not keep a step active when it is only visible behind fixed chrome", () => {
+    const steps = new Map<number, DOMRect>([
+      [1, { top: -200, bottom: 120, height: 320 } as DOMRect],
+      [2, { top: 220, bottom: 520, height: 300 } as DOMRect],
+    ]);
+
+    expect(
+      pickActiveGuideSection({
+        overviewRect: null,
+        overviewContentInsetTop: 64,
+        stepNumbers: [1, 2],
+        getStepRect: (step) => steps.get(step) ?? null,
+        activeStepMinVisibleRatio: 0.2,
+        stepContentInsetTop: 144,
+        innerHeight: 900,
+      }),
+    ).toBe(2);
+  });
+});
 
 describe("pickActiveGuideStep", () => {
   it("advances when the current step is mostly scrolled past", () => {
@@ -14,7 +116,7 @@ describe("pickActiveGuideStep", () => {
     ]);
 
     expect(
-      pickActiveGuideStep( [1, 2], 0.2, (step) => elements.get(step) ?? null),
+      pickActiveGuideStep([1, 2], 0.2, (step) => elements.get(step) ?? null),
     ).toBe(2);
   });
 
@@ -27,69 +129,5 @@ describe("pickActiveGuideStep", () => {
     expect(
       pickActiveGuideStep([1, 2], 0.2, (step) => elements.get(step) ?? null),
     ).toBe(1);
-  });
-
-  it("does not advance when the next step header reaches the scroll anchor", () => {
-    const elements = new Map<number, DOMRect>([
-      [2, { top: -50, bottom: 400, height: 450 } as DOMRect],
-      [3, { top: 160, bottom: 500, height: 340 } as DOMRect],
-    ]);
-
-    expect(getStepVisibleRatio(elements.get(2)!, 800)).toBeCloseTo(400 / 450, 2);
-    expect(
-      pickActiveGuideStep([2, 3], 0.2, (step) => elements.get(step) ?? null, 800),
-    ).toBe(2);
-  });
-
-  it("advances once the current step drops below the visible ratio threshold", () => {
-    const elements = new Map<number, DOMRect>([
-      [2, { top: -380, bottom: 40, height: 420 } as DOMRect],
-      [3, { top: 80, bottom: 420, height: 340 } as DOMRect],
-    ]);
-
-    expect(getStepVisibleRatio(elements.get(2)!, 800)).toBeCloseTo(40 / 420, 2);
-    expect(
-      pickActiveGuideStep([2, 3], 0.2, (step) => elements.get(step) ?? null, 800),
-    ).toBe(3);
-  });
-});
-
-describe("isGuideOverviewVisible", () => {
-  it("is true when the guide top anchor is aligned below the scroll margin", () => {
-    expect(isGuideOverviewVisible({ top: 16, bottom: 400, height: 384 } as DOMRect, 64)).toBe(
-      true,
-    );
-  });
-
-  it("is false once the overview has scrolled past the anchor line", () => {
-    expect(isGuideOverviewVisible({ top: -40, bottom: 300, height: 340 } as DOMRect, 64)).toBe(
-      false,
-    );
-  });
-});
-
-describe("shouldClearGuideStepFromUrl", () => {
-  it("clears the step when the overview is visible and the first step barely peeks", () => {
-    expect(
-      shouldClearGuideStepFromUrl({
-        guideTopRect: { top: 0, bottom: 500, height: 500 } as DOMRect,
-        firstStepRect: { top: 880, bottom: 1080, height: 200 } as DOMRect,
-        scrollMarginTop: 64,
-        activeStepMinVisibleRatio: 0.2,
-        innerHeight: 900,
-      }),
-    ).toBe(true);
-  });
-
-  it("keeps the step when the first step is meaningfully in view on a short page", () => {
-    expect(
-      shouldClearGuideStepFromUrl({
-        guideTopRect: { top: 0, bottom: 300, height: 300 } as DOMRect,
-        firstStepRect: { top: 320, bottom: 520, height: 200 } as DOMRect,
-        scrollMarginTop: 0,
-        activeStepMinVisibleRatio: 0.2,
-        innerHeight: 900,
-      }),
-    ).toBe(false);
   });
 });

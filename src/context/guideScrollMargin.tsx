@@ -2,11 +2,15 @@
 
 import { createContext, useContext, type RefObject } from "react";
 
-/** Extra top scroll margin (px) supplied by a page shell such as `GuideLayout`. */
+/** Parent/site header offset (px) supplied by a page shell such as `GuideLayout`. */
 export const GuideScrollMarginContext = createContext(0);
 
 /** Scroll anchor for the guide overview — set by `GuideLayout` on its root element. */
 export const GuideTopRefContext =
+  createContext<RefObject<HTMLElement | null> | null>(null);
+
+/** Top of `GuideLayout.Content` — marks where the step list begins. */
+export const GuideContentRefContext =
   createContext<RefObject<HTMLElement | null> | null>(null);
 
 export function useGuideScrollMargin(): number {
@@ -17,31 +21,76 @@ export function useGuideTopRef(): RefObject<HTMLElement | null> | null {
   return useContext(GuideTopRefContext);
 }
 
-/** Tailwind `scroll-mt-4` — baseline breathing room below the scroll anchor. */
+export function useGuideContentRef(): RefObject<HTMLElement | null> | null {
+  return useContext(GuideContentRefContext);
+}
+
+/** Tailwind `scroll-mt-4` — default breathing room when URL sync is off. */
 export const GUIDE_STEP_BASE_SCROLL_MARGIN = 16;
 
-/** Sticky progress bar `top-2` offset in px. */
-export const GUIDE_STEP_PROGRESS_STICKY_TOP = 8;
+/** Breathing room between a stuck progress bar and the step below it. */
+export const GUIDE_STEP_PROGRESS_STICKY_GAP = 8;
 
-export function computeGuideStepScrollMarginTop({
-  siteScrollMarginTop = 0,
+/** Parent/site header offset — overview anchor and sticky progress bar. */
+export function computeParentScrollMarginTop({
+  parentScrollMarginTop = 0,
+  additionalParentScrollMarginTop = 0,
+}: {
+  parentScrollMarginTop?: number;
+  additionalParentScrollMarginTop?: number;
+} = {}): number {
+  return parentScrollMarginTop + additionalParentScrollMarginTop;
+}
+
+/** Library-internal offset so deep-linked steps clear the sticky progress bar. */
+export function computeGuideLibraryScrollMarginTop({
   progressBarHeight = 0,
   includeProgressBar = false,
-  additionalScrollMarginTop = 0,
 }: {
-  siteScrollMarginTop?: number;
   progressBarHeight?: number;
   includeProgressBar?: boolean;
-  additionalScrollMarginTop?: number;
-}): number {
-  const progressMargin = includeProgressBar
-    ? progressBarHeight + GUIDE_STEP_PROGRESS_STICKY_TOP
-    : 0;
+} = {}): number {
+  if (!includeProgressBar) {
+    return 0;
+  }
 
+  return progressBarHeight + GUIDE_STEP_PROGRESS_STICKY_GAP;
+}
+
+/** Overview anchor — parent offset only. */
+export function computeGuideOverviewScrollMarginTop({
+  parentScrollMarginTop = 0,
+  additionalParentScrollMarginTop = 0,
+}: {
+  parentScrollMarginTop?: number;
+  additionalParentScrollMarginTop?: number;
+} = {}): number {
+  return computeParentScrollMarginTop({
+    parentScrollMarginTop,
+    additionalParentScrollMarginTop,
+  });
+}
+
+/** Step scroll targets — parent offset plus library progress-bar clearance. */
+export function computeGuideStepScrollMarginTop({
+  parentScrollMarginTop = 0,
+  additionalParentScrollMarginTop = 0,
+  progressBarHeight = 0,
+  includeProgressBar = false,
+}: {
+  parentScrollMarginTop?: number;
+  additionalParentScrollMarginTop?: number;
+  progressBarHeight?: number;
+  includeProgressBar?: boolean;
+}): number {
   return (
-    GUIDE_STEP_BASE_SCROLL_MARGIN +
-    siteScrollMarginTop +
-    progressMargin +
-    additionalScrollMarginTop
+    computeGuideOverviewScrollMarginTop({
+      parentScrollMarginTop,
+      additionalParentScrollMarginTop,
+    }) +
+    computeGuideLibraryScrollMarginTop({
+      progressBarHeight,
+      includeProgressBar,
+    })
   );
 }
